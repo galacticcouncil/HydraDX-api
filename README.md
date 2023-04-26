@@ -1,9 +1,8 @@
-# Getting Started with [Fastify-CLI](https://www.npmjs.com/package/fastify-cli)
-This project was bootstrapped with Fastify-CLI.
+# HydraDX-api
+## Description
+An API to satisfy your most hydrated needs.
 
-## Available Scripts
-
-In the project directory, you can run:
+## Running
 
 ### `npm run dev`
 
@@ -18,6 +17,6 @@ For production mode
 
 Run the test cases.
 
-## Learn More
+## API Framework
 
-To learn Fastify, check out the [Fastify documentation](https://www.fastify.io/docs/latest/).
+Built using Fastify, check out the [Fastify documentation](https://www.fastify.io/docs/latest/).
