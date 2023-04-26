@@ -1,4 +1,6 @@
 'use strict'
+const { ApiPromise, WsProvider } = require('@polkadot/api');
+const {RPC_ADDR} = require('../../constants');
 
 module.exports = async function (fastify, opts) {
     fastify.get('/', {
@@ -17,6 +19,27 @@ module.exports = async function (fastify, opts) {
         }
     }, (request, reply) => {
         reply.send({ alive: true })
+    })
+
+    fastify.get('/rpc', {
+      schema: {
+          description: 'RPC health check',
+          tags: ['health'],
+          response: {
+              200: {
+                  type: 'object',
+                  properties: {
+                      block_height: { type: 'number' }
+                  }
+              }
+          }
+      }
+    }, async function (_, response) {
+      const provider = new WsProvider(RPC_ADDR);
+      const api = await ApiPromise.create({ provider });
+      const {block} = await api.rpc.chain.getBlock();
+
+      response.send({ block_height: block.header.number.toNumber() })
     })
 
     fastify.get('/sql', {

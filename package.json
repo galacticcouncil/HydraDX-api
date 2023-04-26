@@ -18,6 +18,7 @@
     "@fastify/autoload": "^5.0.0",
     "@fastify/postgres": "^5.2.0",
     "@fastify/sensible": "^5.0.0",
+    "@polkadot/api": "^10.4.1",
     "fastify": "^4.0.0",
     "fastify-cli": "^5.7.1",
     "fastify-plugin": "^4.0.0",
