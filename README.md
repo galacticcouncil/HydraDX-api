@@ -4,19 +4,18 @@ An API to satisfy your most hydrated needs.
 
 ## Running
 
-### `npm run dev`
+### Dev
+`npm run dev`
 
-To start the app in dev mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Test
+`npm run test`
 
-### `npm start`
+### Production
+`npm run start`
 
-For production mode
-
-### `npm run test`
-
-Run the test cases.
+### Docker
+`docker build -t hydradx-api .`
+`docker run -p 3000:3000 -d hydradx-api`
 
 ## API Framework
-
 Built using Fastify, check out the [Fastify documentation](https://www.fastify.io/docs/latest/).
