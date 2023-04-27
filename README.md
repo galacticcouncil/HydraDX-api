@@ -14,7 +14,7 @@ An API to satisfy your most hydrated needs.
 `npm run start`
 
 ### Docker
-`docker build -t hydradx-api .`
+`docker build -t hydradx-api .`  
 `docker run -p 3000:3000 -d hydradx-api`
 
 ## API Framework
