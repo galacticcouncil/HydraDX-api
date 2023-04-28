@@ -25,7 +25,8 @@
     "fastify": "^4.0.0",
     "fastify-cli": "^5.7.1",
     "fastify-plugin": "^4.0.0",
-    "pg": "^8.10.0"
+    "pg": "^8.10.0",
+    "redis": "^4.6.6"
   },
   "devDependencies": {
     "tap": "^16.1.0"

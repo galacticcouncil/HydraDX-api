@@ -1,6 +1,9 @@
-const { setTimeout } = require('timers/promises');
+const {newRedisClient} = require('../clients/redis');
 
 (async () => {
-  await setTimeout(10000)
-  console.log("Test")
+  const redis = await newRedisClient();
+
+  // redis.set("cache_rpc_block_height", )
+
+  redis.disconnect()
 })();

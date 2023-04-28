@@ -17,5 +17,10 @@ An API to satisfy your most hydrated needs.
 `docker build -t hydradx-api .`  
 `docker run -p 3000:3000 -d hydradx-api`
 
-## API Framework
-Built using Fastify, check out the [Fastify documentation](https://www.fastify.io/docs/latest/).
+## Framework
+Built using:
+* [Fastify](https://www.fastify.io/docs/latest/) for API framework;
+* [PolkadotJS/api](https://polkadot.js.org/docs/api/) for communication with RPC;
+* [Subsquid](https://docs.subsquid.io/) for chain indexer / processor;
+* [Redis](https://redis.io/docs/about/) for caching layer;
+* [Bree](https://github.com/breejs/bree) for scheduled jobs.

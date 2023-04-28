@@ -27,6 +27,7 @@ module.exports = async function (fastify, opts) {
     options: Object.assign({}, opts)
   })
 
+  // Connect to indexer DB
   fastify.register(require('@fastify/postgres'), {
     connectionString: 'postgres://reader:reader@localhost/ingest'
   })
