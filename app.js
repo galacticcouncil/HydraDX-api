@@ -2,6 +2,7 @@
 
 const path = require('path')
 const AutoLoad = require('@fastify/autoload')
+const Bree = require('bree');
 
 // Pass --options via CLI arguments in command to enable these options.
 module.exports.options = {}
@@ -29,4 +30,18 @@ module.exports = async function (fastify, opts) {
   fastify.register(require('@fastify/postgres'), {
     connectionString: 'postgres://reader:reader@localhost/ingest'
   })
+
+  // Start processing scheduled jobs
+  const bree = new Bree({
+    jobs: [
+      {
+        name: 'cache_rpc_last_block',
+        interval: '3s'
+      }
+    ]
+  });
+
+  (async () => {
+    await bree.start();
+  })();
 }
