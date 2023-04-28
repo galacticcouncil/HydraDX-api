@@ -1,6 +1,6 @@
 'use strict'
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const {RPC_ADDR} = require('../../constants');
+const {newRedisClient} = require('../../clients/redis');
+const {newRpcClient} = require('../../clients/rpc');
 
 module.exports = async function (fastify, opts) {
     fastify.get('/', {
@@ -35,12 +35,31 @@ module.exports = async function (fastify, opts) {
           }
       }
     }, async function (_, response) {
-      const provider = new WsProvider(RPC_ADDR);
-      const api = await ApiPromise.create({ provider });
-      const {block} = await api.rpc.chain.getBlock();
+      const rpcClient = await newRpcClient();
+      const {block} = await rpcClient.rpc.chain.getBlock();
 
       response.send({ block_height: block.header.number.toNumber() })
     })
+
+    fastify.get('/cache_rpc', {
+        schema: {
+            description: 'Cached RPC data health check',
+            tags: ['health'],
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        block_height: { type: 'number' }
+                    }
+                }
+            }
+        }
+      }, async function (_, response) {
+        const redis = await newRedisClient();
+        let payload = await redis.get("cache_rpc_block_height");
+  
+        response.send(JSON.parse(payload))
+      })
 
     fastify.get('/sql', {
       schema: {

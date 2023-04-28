@@ -37,7 +37,7 @@ module.exports = async function (fastify, opts) {
     jobs: [
       {
         name: 'cache_rpc_last_block',
-        interval: '3s'
+        interval: '6s'
       }
     ]
   });
