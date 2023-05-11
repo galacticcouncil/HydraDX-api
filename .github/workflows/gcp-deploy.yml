@@ -1,4 +1,4 @@
-name: Build and Deploy to GCP Cloud Run
+name: Deploy to GCP Cloud Run
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   GCP_IDENTITY_PROVIDER_ID: ${{ secrets.GCP_IDENTITY_PROVIDER_ID }}
   GAR_LOCATION: europe-west3
   REPOSITORY: hydradx-api
-  SERVICE: hydradx-api
+  SERVICE: hydradx-api-app
 
 jobs:
   deploy:
