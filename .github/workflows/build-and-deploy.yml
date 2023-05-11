@@ -10,7 +10,7 @@ env:
   GCP_IDENTITY_PROVIDER_ID: ${{ secrets.GCP_IDENTITY_PROVIDER_ID }}
   GAR_LOCATION: europe-west3
   REPOSITORY: hydradx-api
-  SERVICE: api
+  SERVICE: hydradx-api
 
 jobs:
   deploy:
@@ -32,5 +32,5 @@ jobs:
 
       - name: Build and Push Container
         run: |-
-          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}" ./
-          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}"
+          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest" ./
+          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest"
