@@ -30,6 +30,12 @@ jobs:
           workload_identity_provider: ${{env.GCP_IDENTITY_PROVIDER_ID}}
           service_account: ${{env.GCP_SERVICE_ACCOUNT}}
 
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v1'
+
+      - name: Set up Docker
+        run: gcloud auth configure-docker europe-west3-docker.pkg.dev
+
       - name: Build and Push Container
         run: |-
           docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest" ./
