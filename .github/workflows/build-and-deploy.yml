@@ -1,0 +1,36 @@
+name: Build and Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+  GCP_IDENTITY_PROVIDER_ID: ${{ secrets.GCP_IDENTITY_PROVIDER_ID }}
+  GAR_LOCATION: europe-west3
+  REPOSITORY: hydradx-api
+  SERVICE: api
+
+jobs:
+  deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate with GCP
+        uses: 'google-github-actions/auth@v1'
+        with:
+          workload_identity_provider: ${{env.WORKLOAD_IDENTITY_PROVIDER_ID}}
+          service_account: ${{env.GCP_SERVICE_ACCOUNT}}
+
+      - name: Build and Push Container
+        run: |-
+          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}" ./
+          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}"
