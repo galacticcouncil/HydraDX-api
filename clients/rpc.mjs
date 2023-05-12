@@ -1,5 +1,5 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import { RPC_ADDR } from "../constants.mjs";
+import { RPC_ADDR } from "../variables.mjs";
 
 async function newRpcClient() {
   const provider = new WsProvider(RPC_ADDR);

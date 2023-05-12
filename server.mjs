@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import appService from "./app.mjs";
+import { IS_DOCKER_RUN, IS_GOOGLE_CLOUD_RUN } from "./variables.mjs";
 
 function build() {
   const fastify = Fastify({ trustProxy: true });
@@ -10,11 +11,6 @@ function build() {
 }
 
 async function start() {
-  // Google Cloud Run will set this environment variable for you, so
-  // you can also use it to detect if you are running in Cloud Run
-  const IS_GOOGLE_CLOUD_RUN = process.env.K_SERVICE !== undefined;
-  const IS_DOCKER_RUN = process.env.DOCKER_RUN !== undefined;
-
   // You must listen on the port Cloud Run provides
   const port = process.env.PORT || 3000;
 

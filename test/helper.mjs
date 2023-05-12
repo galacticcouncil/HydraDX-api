@@ -2,7 +2,7 @@
 // between our tests.
 
 import { build as buildApplication } from "fastify-cli/helper.js";
-import { dirname } from "../constants.mjs";
+import { dirname } from "../variables.mjs";
 
 import path from "path";
 const AppPath = path.join(dirname(), "app.mjs");

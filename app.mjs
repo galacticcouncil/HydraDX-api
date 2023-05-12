@@ -1,5 +1,5 @@
 import path from "path";
-import { dirname } from "./constants.mjs";
+import { dirname } from "./variables.mjs";
 import AutoLoad from "@fastify/autoload";
 import Postgres from "@fastify/postgres";
 
