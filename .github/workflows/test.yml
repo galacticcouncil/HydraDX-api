@@ -1,0 +1,17 @@
+name: Run tests
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up npm
+        run: npm install
+      - name: Run tests
+        run: npm run test
