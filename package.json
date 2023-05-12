@@ -8,6 +8,8 @@
   },
   "scripts": {
     "test": "tap \"test/**/*.test.mjs\"",
+    "lint": "npx prettier --check .",
+    "format": "npx prettier --write .",
     "dev": "fastify start -w -l info -P app.mjs",
     "start": "node server.mjs"
   },
@@ -29,6 +31,7 @@
     "redis": "^4.6.6"
   },
   "devDependencies": {
+    "prettier": "2.8.8",
     "tap": "^16.1.0"
   }
 }
