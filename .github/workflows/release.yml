@@ -71,7 +71,7 @@ jobs:
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v1'
         with:
-          service: 'env.GCP_SERVICE'
+          service: ${{env.GCP_SERVICE}}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_SERVICE }}:${{ github.sha }}
 
       - name: 'Print output'
