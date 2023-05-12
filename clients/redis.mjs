@@ -1,22 +1,22 @@
-import {createClient} from "redis";
+import { createClient } from "redis";
 
 const redisUri = () => {
   if (process.env.ENV_VARIABLE) {
-    return process.env.ENV_VARIABLE
+    return process.env.ENV_VARIABLE;
   } else {
-    return 'redis://127.0.0.1:6379'
+    return "redis://127.0.0.1:6379";
   }
-}
+};
 
 async function newRedisClient() {
   const client = createClient({
-    url: redisUri()
+    url: redisUri(),
   });
-  client.on('error', err => console.log('Redis Client Error', err));
+  client.on("error", (err) => console.log("Redis Client Error", err));
 
   await client.connect();
 
-  return client
+  return client;
 }
 
-export {newRedisClient};
+export { newRedisClient };

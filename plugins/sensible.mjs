@@ -1,5 +1,5 @@
-import fp from 'fastify-plugin';
-import Sensible from '@fastify/sensible';
+import fp from "fastify-plugin";
+import Sensible from "@fastify/sensible";
 /**
  * This plugins adds some utilities to handle http errors
  *
@@ -7,6 +7,6 @@ import Sensible from '@fastify/sensible';
  */
 export default fp(async (fastify, opts) => {
   fastify.register(Sensible, {
-    errorHandler: false
-  })
+    errorHandler: false,
+  });
 });

@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -31,21 +31,21 @@ jobs:
     needs: test
 
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: "read"
+      id-token: "write"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Authenticate with GCP
-        uses: 'google-github-actions/auth@v1'
+        uses: "google-github-actions/auth@v1"
         with:
           workload_identity_provider: ${{env.GCP_IDENTITY_PROVIDER_ID}}
           service_account: ${{env.GCP_SERVICE_ACCOUNT}}
 
       - name: Set up Cloud SDK
-        uses: 'google-github-actions/setup-gcloud@v1'
+        uses: "google-github-actions/setup-gcloud@v1"
 
       - name: Set up Docker
         run: gcloud auth configure-docker ${{env.GCP_REGION}}-docker.pkg.dev
@@ -60,22 +60,22 @@ jobs:
     needs: build
 
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: "read"
+      id-token: "write"
 
     steps:
       - name: Authenticate with GCP
-        uses: 'google-github-actions/auth@v1'
+        uses: "google-github-actions/auth@v1"
         with:
           workload_identity_provider: ${{env.GCP_IDENTITY_PROVIDER_ID}}
           service_account: ${{env.GCP_SERVICE_ACCOUNT}}
 
-      - id: 'deploy'
-        uses: 'google-github-actions/deploy-cloudrun@v1'
+      - id: "deploy"
+        uses: "google-github-actions/deploy-cloudrun@v1"
         with:
           service: ${{env.GCP_SERVICE}}
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_SERVICE }}:latest
           region: ${{env.GCP_REGION}}
 
-      - name: 'Print output'
+      - name: "Print output"
         run: 'curl "${{ steps.deploy.outputs.url }}"'
