@@ -1,11 +1,8 @@
-name: Build
+name: Release
 
 on:
-  workflow_run:
-    workflows: ["Run Tests"]
-    branches: [main]
-    types: 
-      - completed
+  push:
+    branches: [ main ]
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -16,7 +13,19 @@ env:
   SERVICE: hydradx-api-app
 
 jobs:
-  deploy:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up npm
+        run: npm install
+      - name: Run tests
+        run: npm run test
+
+  build:
+    needs: test
     permissions:
       contents: 'read'
       id-token: 'write'
