@@ -2,7 +2,6 @@ import path from 'path';
 import { dirname } from './constants.mjs';
 import AutoLoad from '@fastify/autoload';
 import Postgres from '@fastify/postgres';
-import Bree from 'bree';
 
 // Pass --options via CLI arguments in command to enable these options.
 export var options = {};
@@ -31,20 +30,4 @@ export default async (fastify, opts) => {
   fastify.register(Postgres, {
     connectionString: 'postgres://reader:reader@localhost/ingest'
   })
-
-  // Start processing scheduled jobs
-  const bree = new Bree({
-    defaultExtension: 'mjs',
-    jobs: [
-      {
-        name: 'cache_rpc_last_block',
-        interval: '6s',
-        closeWorkerAfterMs: 3000
-      }
-    ]
-  });
-
-  (async () => {
-    await bree.start();
-  })();
 };

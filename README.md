@@ -23,4 +23,3 @@ Built using:
 * [PolkadotJS/api](https://polkadot.js.org/docs/api/) for communication with RPC;
 * [Subsquid](https://docs.subsquid.io/) for chain indexer / processor;
 * [Redis](https://redis.io/docs/about/) for caching layer;
-* [Bree](https://github.com/breejs/bree) for scheduled jobs.
