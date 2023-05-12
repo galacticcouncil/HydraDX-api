@@ -1,16 +1,14 @@
-'use strict'
-
 // Read the .env file.
 require('dotenv').config()
 
 // Require the framework
-const Fastify = require('fastify')
+import Fastify from 'fastify';
 
 function build() {
   const fastify = Fastify({ trustProxy: true })
 
   // Register your application as a normal plugin.
-  const appService = require('./app.js')
+  const appService = require('./app.mjs')
   fastify.register(appService)
   return fastify
 }
@@ -37,7 +35,7 @@ async function start() {
   }
 }
 
-module.exports = build
+export default build;
 
 if (require.main === module) {
   start()

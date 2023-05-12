@@ -1,13 +1,13 @@
-'use strict'
-
-const path = require('path')
-const AutoLoad = require('@fastify/autoload')
-const Bree = require('bree');
+import path from 'path';
+import { dirname } from './constants.mjs';
+import AutoLoad from '@fastify/autoload';
+import Postgres from '@fastify/postgres';
+import Bree from 'bree';
 
 // Pass --options via CLI arguments in command to enable these options.
-module.exports.options = {}
+export var options = {};
 
-module.exports = async function (fastify, opts) {
+export default async (fastify, opts) => {
   // Place here your custom code!
 
   // Do not touch the following lines
@@ -16,24 +16,25 @@ module.exports = async function (fastify, opts) {
   // those should be support plugins that are reused
   // through your application
   fastify.register(AutoLoad, {
-    dir: path.join(__dirname, 'plugins'),
+    dir: path.join(dirname(), 'plugins'),
     options: Object.assign({}, opts)
   })
 
   // This loads all plugins defined in routes
   // define your routes in one of these
   fastify.register(AutoLoad, {
-    dir: path.join(__dirname, 'routes'),
+    dir: path.join(dirname(), 'routes'),
     options: Object.assign({}, opts)
   })
 
   // Connect to indexer DB
-  fastify.register(require('@fastify/postgres'), {
+  fastify.register(Postgres, {
     connectionString: 'postgres://reader:reader@localhost/ingest'
   })
 
   // Start processing scheduled jobs
   const bree = new Bree({
+    defaultExtension: 'mjs',
     jobs: [
       {
         name: 'cache_rpc_last_block',
@@ -46,4 +47,4 @@ module.exports = async function (fastify, opts) {
   (async () => {
     await bree.start();
   })();
-}
+};

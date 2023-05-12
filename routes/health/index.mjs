@@ -1,8 +1,7 @@
-'use strict'
-const {newRedisClient} = require('../../clients/redis');
-const {newRpcClient} = require('../../clients/rpc');
+import {newRedisClient} from '../../clients/redis.mjs';
+import {newRpcClient} from '../../clients/rpc.mjs';
 
-module.exports = async function (fastify, opts) {
+export default async (fastify, opts) => {
     fastify.get('/', {
       schema: {
         description: 'API health check',
@@ -34,7 +33,7 @@ module.exports = async function (fastify, opts) {
           }
         }
       }
-    }, async function (_, response) {
+    }, async (_, response) => {
       const rpcClient = await newRpcClient();
       const {block} = await rpcClient.rpc.chain.getBlock();
 
@@ -54,7 +53,7 @@ module.exports = async function (fastify, opts) {
           }
         }
       }
-    }, async function (_, response) {
+    }, async (_, response) => {
       const redis = await newRedisClient();
       const payload = JSON.stringify({ block_height: Date() });
       await redis.set("dgd", payload)
@@ -75,7 +74,7 @@ module.exports = async function (fastify, opts) {
           }
         }
       }
-    }, async function (_, response) {
+    }, async (_, response) => {
       const redis = await newRedisClient();
       let payload = await redis.get("dgd");
 
@@ -95,7 +94,7 @@ module.exports = async function (fastify, opts) {
           }
         }
       }
-    }, async function (_, response) {
+    }, async (_, response) => {
       const redis = await newRedisClient();
       let payload = await redis.get("cache_rpc_block_height");
 
@@ -115,10 +114,10 @@ module.exports = async function (fastify, opts) {
           }
         }
       }
-    }, async function (request, response) {
+    }, async (request, response) => {
       const {rows} = await fastify.pg.query(
         'SELECT height FROM public.block ORDER BY id DESC LIMIT 1'
       )
       response.send({ block_height: rows[0]['height'] })
   })
-}
+};

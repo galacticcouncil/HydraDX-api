@@ -1,5 +1,5 @@
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const {RPC_ADDR} = require('../constants');
+import {ApiPromise, WsProvider} from '@polkadot/api';
+import {RPC_ADDR} from '../constants.mjs';
 
 async function newRpcClient() {
   const provider = new WsProvider(RPC_ADDR);
@@ -8,4 +8,4 @@ async function newRpcClient() {
   return client
 }
 
-module.exports.newRpcClient = newRpcClient;
+export {newRpcClient};

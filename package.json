@@ -2,15 +2,16 @@
   "name": "hydradx-api",
   "version": "1.0.0",
   "description": "An API to satisfy your most hydrated needs.",
-  "main": "app.js",
+  "main": "app.mjs",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "tap \"test/**/*.test.js\"",
-    "dev": "fastify start -w -l info -P app.js",
+    "test": "tap \"test/**/*.test.mjs\"",
+    "dev": "fastify start -w -l info -P app.mjs",
     "start": "node server"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",

@@ -1,5 +1,5 @@
-const {newRedisClient} = require('../clients/redis');
-const {newRpcClient} = require('../clients/rpc');
+import {newRedisClient} from '../clients/redis.mjs';
+import {newRpcClient} from '../clients/rpc.mjs';
 
 (async () => {
   const rpcClient = await newRpcClient();
