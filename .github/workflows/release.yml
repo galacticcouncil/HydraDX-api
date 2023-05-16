@@ -78,6 +78,3 @@ jobs:
 
       - id: deploy
         run: gcloud run services replace .gcp/hydradx_api_service.yml
-
-      - name: Print output
-        run: 'curl "${{steps.deploy.outputs.url}}"'
