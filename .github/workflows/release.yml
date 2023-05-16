@@ -5,9 +5,9 @@ on:
     branches: [main]
 
 env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-  GCP_IDENTITY_PROVIDER_ID: ${{ secrets.GCP_IDENTITY_PROVIDER_ID }}
+  GCP_PROJECT_ID: ${{secrets.GCP_PROJECT_ID}}
+  GCP_SERVICE_ACCOUNT: ${{secrets.GCP_SERVICE_ACCOUNT}}
+  GCP_IDENTITY_PROVIDER_ID: ${{secrets.GCP_IDENTITY_PROVIDER_ID}}
   GCP_REGION: europe-west3
   GCP_REPOSITORY: hydradx-api
   GCP_SERVICE: hydradx-api-app
@@ -64,6 +64,9 @@ jobs:
       id-token: "write"
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Authenticate with GCP
         uses: "google-github-actions/auth@v1"
         with:
@@ -77,4 +80,4 @@ jobs:
         run: gcloud run services replace .gcp/hydradx_api_service.yml
 
       - name: Print output
-        run: 'curl "${{ steps.deploy.outputs.url }}"'
+        run: 'curl "${{steps.deploy.outputs.url}}"'
