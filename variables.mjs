@@ -4,8 +4,6 @@ import { fileURLToPath } from "url";
 export const IS_DOCKER_RUN = process.env.DOCKER_RUN !== undefined;
 export const IS_GOOGLE_CLOUD_RUN = process.env.K_SERVICE !== undefined;
 
-export const RPC_ADDR = "wss://rpc.hydradx.cloud";
-
 export const dirname = () => path.dirname(fileURLToPath(import.meta.url));
 
 export const redisUri = () => {
@@ -15,3 +13,5 @@ export const redisUri = () => {
     return "redis://127.0.0.1:6379";
   }
 };
+
+export const rpcUri = () => "wss://rpc.hydradx.cloud";

@@ -2,6 +2,7 @@
   "name": "hydradx-api",
   "version": "1.0.0",
   "description": "An API to satisfy your most hydrated needs.",
+  "license": "Apache-2.0",
   "main": "app.mjs",
   "directories": {
     "test": "test"
@@ -16,7 +17,6 @@
   "type": "module",
   "keywords": [],
   "author": "",
-  "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "^5.0.0",
     "@fastify/postgres": "^5.2.0",

@@ -52,8 +52,8 @@ jobs:
 
       - name: Build and Push Container
         run: |-
-          docker build -t "${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_SERVICE }}:latest" ./
-          docker push "${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_SERVICE }}:latest"
+          docker build -t "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_SERVICE}}:latest" ./
+          docker push "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_SERVICE}}:latest"
 
   deploy:
     runs-on: ubuntu-latest
@@ -70,12 +70,11 @@ jobs:
           workload_identity_provider: ${{env.GCP_IDENTITY_PROVIDER_ID}}
           service_account: ${{env.GCP_SERVICE_ACCOUNT}}
 
-      - id: "deploy"
-        uses: "google-github-actions/deploy-cloudrun@v1"
-        with:
-          service: ${{env.GCP_SERVICE}}
-          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_SERVICE }}:latest
-          region: ${{env.GCP_REGION}}
+      - name: Set up Cloud SDK
+        uses: "google-github-actions/setup-gcloud@v1"
 
-      - name: "Print output"
+      - id: deploy
+        run: gcloud run services replace .gcp/hydradx_api_service.yml
+
+      - name: Print output
         run: 'curl "${{ steps.deploy.outputs.url }}"'
