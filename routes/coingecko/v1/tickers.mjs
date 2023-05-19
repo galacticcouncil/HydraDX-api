@@ -41,7 +41,7 @@ export default async (fastify, opts) => {
         const { rows } = await fastify.pg.query(TICKERS_QRY);
         const result = rows[0];
 
-        await redis.set(cacheKey, JSON.stringify(result), "EX", 10);
+        await redis.set(cacheKey, JSON.stringify(result));
         await redis.expire(cacheKey, 10);
         reply.send(result);
       } else {
