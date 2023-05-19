@@ -22,4 +22,4 @@ export const sqlUri = () => {
   } else {
     return "postgres://squid:squid@127.0.0.1:5432/squid";
   }
-}
+};

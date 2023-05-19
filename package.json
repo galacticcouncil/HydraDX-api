@@ -27,6 +27,7 @@
     "fastify": "^4.0.0",
     "fastify-cli": "^5.7.1",
     "fastify-plugin": "^4.0.0",
+    "fs": "^0.0.1-security",
     "pg": "^8.10.0",
     "redis": "^4.6.6"
   },
