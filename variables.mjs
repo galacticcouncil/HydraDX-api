@@ -15,3 +15,5 @@ export const redisUri = () => {
 };
 
 export const rpcUri = () => "wss://rpc.hydradx.cloud";
+
+export const sqlUri = () => "postgres://squid:squid@10.130.49.4:5432/squid";

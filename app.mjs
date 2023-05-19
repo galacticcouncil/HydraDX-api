@@ -1,5 +1,5 @@
 import path from "path";
-import { dirname } from "./variables.mjs";
+import { dirname, sqlUri } from "./variables.mjs";
 import AutoLoad from "@fastify/autoload";
 import Postgres from "@fastify/postgres";
 
@@ -28,6 +28,6 @@ export default async (fastify, opts) => {
 
   // Connect to indexer DB
   fastify.register(Postgres, {
-    connectionString: "postgres://reader:reader@localhost/ingest",
+    connectionString: sqlUri(),
   });
 };
