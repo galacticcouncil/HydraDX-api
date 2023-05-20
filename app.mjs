@@ -2,12 +2,20 @@ import path from "path";
 import { dirname, sqlUri } from "./variables.mjs";
 import AutoLoad from "@fastify/autoload";
 import Postgres from "@fastify/postgres";
+import Swagger from "@fastify/swagger";
+import SwaggerUi from "@fastify/swagger-ui";
 
 // Pass --options via CLI arguments in command to enable these options.
 export var options = {};
 
 export default async (fastify, opts) => {
   // Place here your custom code!
+
+  // Add Swagger for docs
+  fastify.register(Swagger, {});
+  fastify.register(SwaggerUi, {
+    routePrefix: "/docs",
+  });
 
   // Do not touch the following lines
 

@@ -1,23 +1,22 @@
+import { newRedisClient } from "../../clients/redis.mjs";
+
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/",
+    url: "/app",
     method: ["GET"],
     schema: {
-      description: "HydraDX API root",
+      description: "API health check",
+      tags: ["health"],
       response: {
         200: {
           description: "Success Response",
           type: "object",
           properties: {
-            about: { type: "string" },
-            docs: { type: "string" },
+            alive: { type: "boolean" },
           },
         },
       },
     },
-    handler: async (request, reply) => ({
-      about: "Welcome to the HydraDX API",
-      docs: "Visit /docs",
-    }),
+    handler: async (_, response) => response.send({ alive: true }),
   });
 };

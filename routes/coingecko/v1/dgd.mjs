@@ -7,7 +7,7 @@ const TICKERS_QRY = fs
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/tickers/:baseCurrency-:targetCurrency",
+    url: "/dgd/:baseCurrency-:targetCurrency",
     method: ["GET"],
     schema: {
       description: "24h pricing and volume information for a given asset pair",
