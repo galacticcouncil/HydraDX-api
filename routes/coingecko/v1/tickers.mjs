@@ -16,15 +16,18 @@ export default async (fastify, opts) => {
         response: {
           200: {
             description: "Success Response",
-            type: "object",
-            properties: {
-              date: { type: "string" },
-              ticker_id: { type: "string" },
-              base_currency: { type: "string" },
-              target_currency: { type: "string" },
-              last_price: { type: "number" },
-              base_volume: { type: "number" },
-              target_volume: { type: "number" },
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                date: { type: "string" },
+                ticker_id: { type: "string" },
+                base_currency: { type: "string" },
+                target_currency: { type: "string" },
+                last_price: { type: "number" },
+                base_volume: { type: "number" },
+                target_volume: { type: "number" },
+              },
             },
           },
         },
@@ -39,11 +42,10 @@ export default async (fastify, opts) => {
 
       if (cache === null) {
         const { rows } = await fastify.pg.query(TICKERS_QRY);
-        const result = rows[0];
 
-        await redis.set(cacheKey, JSON.stringify(result));
+        await redis.set(cacheKey, JSON.stringify(rows));
         await redis.expire(cacheKey, 10);
-        reply.send(result);
+        reply.send(rows);
       } else {
         reply.send(JSON.parse(cache));
       }
