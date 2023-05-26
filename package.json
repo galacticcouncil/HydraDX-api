@@ -5,11 +5,11 @@
   "license": "Apache-2.0",
   "main": "app.mjs",
   "scripts": {
+    "app": "node app/server.mjs",
+    "app-dev": "fastify start -w -l info -P app/app.mjs",
     "app-test": "tap \"app/test/**/*.test.mjs\"",
     "lint": "npx prettier --check .",
-    "format": "npx prettier --write .",
-    "dev": "fastify start -w -l info -P app/app.mjs",
-    "start": "node app/server.mjs"
+    "format": "npx prettier --write ."
   },
   "type": "module",
   "keywords": [],
