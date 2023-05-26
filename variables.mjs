@@ -23,3 +23,7 @@ export const sqlUri = () => {
     return "postgres://squid:squid@127.0.0.1:5432/squid";
   }
 };
+
+export const JOBS = {
+  cacheRpcBlockHeightJob: "cache-rpc-block-height-job",
+};

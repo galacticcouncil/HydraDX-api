@@ -8,6 +8,7 @@
     "app": "node app/server.mjs",
     "app-dev": "fastify start -w -l info -P app/app.mjs",
     "app-test": "tap \"app/test/**/*.test.mjs\"",
+    "jobs": "node jobs/jobs.mjs",
     "lint": "npx prettier --check .",
     "format": "npx prettier --write ."
   },
