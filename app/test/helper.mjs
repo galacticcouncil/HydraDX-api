@@ -2,10 +2,10 @@
 // between our tests.
 
 import { build as buildApplication } from "fastify-cli/helper.js";
-import { dirname } from "../variables.mjs";
+import { dirname } from "../../variables.mjs";
 
 import path from "path";
-const AppPath = path.join(dirname(), "app.mjs");
+const AppPath = path.join(dirname(), "app/app.mjs");
 
 // Fill in this config with all the configurations
 // needed for testing the application

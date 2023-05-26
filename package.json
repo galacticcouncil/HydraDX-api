@@ -4,11 +4,8 @@
   "description": "An API to satisfy your most hydrated needs.",
   "license": "Apache-2.0",
   "main": "app.mjs",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
-    "test": "tap \"test/**/*.test.mjs\"",
+    "app-test": "tap \"app/test/**/*.test.mjs\"",
     "lint": "npx prettier --check .",
     "format": "npx prettier --write .",
     "dev": "fastify start -w -l info -P app/app.mjs",

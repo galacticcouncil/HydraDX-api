@@ -21,8 +21,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Set up npm
         run: npm install
-      - name: Run tests
-        run: npm run test
+      - name: Run app tests
+        run: npm run app-test
       - name: Lint
         run: npm run lint
 
@@ -77,4 +77,4 @@ jobs:
         uses: "google-github-actions/setup-gcloud@v1"
 
       - id: deploy
-        run: gcloud run services replace .gcp/hydradx_api_service.yml
+        run: gcloud run services replace .gcp/hydradx_api_app.yml

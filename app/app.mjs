@@ -16,8 +16,8 @@ export default async (fastify, opts) => {
   fastify.register(SwaggerUi, {
     routePrefix: "/docs",
     theme: {
-      title: "HydraDX API Docs"
-    }
+      title: "HydraDX API Docs",
+    },
   });
 
   // Do not touch the following lines
