@@ -1,5 +1,3 @@
-import { newRedisClient } from "../../clients/redis.mjs";
-
 export default async (fastify, opts) => {
   fastify.route({
     url: "/app",

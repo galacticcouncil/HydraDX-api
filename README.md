@@ -4,6 +4,8 @@
 
 An API to satisfy your most hydrated needs.
 
+Docs: https://hydradx-api-app-2u5klwxkrq-ey.a.run.app/docs
+
 ## Running
 
 ### Dev

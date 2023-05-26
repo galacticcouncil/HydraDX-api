@@ -11,8 +11,8 @@
     "test": "tap \"test/**/*.test.mjs\"",
     "lint": "npx prettier --check .",
     "format": "npx prettier --write .",
-    "dev": "fastify start -w -l info -P app.mjs",
-    "start": "node server.mjs"
+    "dev": "fastify start -w -l info -P app/app.mjs",
+    "start": "node app/server.mjs"
   },
   "type": "module",
   "keywords": [],

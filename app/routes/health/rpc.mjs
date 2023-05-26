@@ -1,4 +1,4 @@
-import { newRpcClient } from "../../clients/rpc.mjs";
+import { newRpcClient } from "../../../clients/rpc.mjs";
 
 export default async (fastify, opts) => {
   fastify.route({

@@ -1,4 +1,4 @@
-import { newRedisClient } from "../../../clients/redis.mjs";
+import { newRedisClient } from "../../../../clients/redis.mjs";
 import fs from "fs";
 
 const TICKERS_QRY = fs

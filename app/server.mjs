@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import appService from "./app.mjs";
-import { IS_DOCKER_RUN, IS_GOOGLE_CLOUD_RUN } from "./variables.mjs";
+import { IS_DOCKER_RUN, IS_GOOGLE_CLOUD_RUN } from "../variables.mjs";
 
 function build() {
   const fastify = Fastify({ trustProxy: true });
