@@ -86,7 +86,7 @@ jobs:
         run: gcloud components install beta
 
       - name: deploy api-app
-        run: gcloud run services replace .gcp/hydradx_api_app.yml
+        run: gcloud beta run services replace .gcp/hydradx_api_app.yml
 
       - name: deploy all jobs
         run: gcloud beta run jobs replace .gcp/jobs/*
