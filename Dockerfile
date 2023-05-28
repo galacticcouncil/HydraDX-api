@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/node
-FROM node:19
+FROM node:19 AS api-base
 
 # Create and change to the app directory.
 WORKDIR /usr/src/app
@@ -19,5 +19,10 @@ COPY . .
 EXPOSE 3000
 ENV DOCKER_RUN=1 PORT=3000
 
-# Run the web service on container startup.
+# API app
+FROM api-base AS api-app
 CMD [ "npm", "run", "app" ]
+
+# API jobs
+FROM api-base AS api-jobs
+CMD [ "npm", "run", "jobs" ]

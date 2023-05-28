@@ -10,7 +10,8 @@ env:
   GCP_IDENTITY_PROVIDER_ID: ${{secrets.GCP_IDENTITY_PROVIDER_ID}}
   GCP_REGION: europe-west3
   GCP_REPOSITORY: hydradx-api
-  GCP_SERVICE: hydradx-api-app
+  GCP_APP: hydradx-api-app
+  GCP_JOBS: hydradx-api-jobs
 
 jobs:
   test:
@@ -50,10 +51,15 @@ jobs:
       - name: Set up Docker
         run: gcloud auth configure-docker ${{env.GCP_REGION}}-docker.pkg.dev
 
-      - name: Build and Push Container
+      - name: Build and Push API app
         run: |-
-          docker build -t "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_SERVICE}}:latest" ./
-          docker push "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_SERVICE}}:latest"
+          docker build --target api-app -t "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_APP}}:latest" ./
+          docker push "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_APP}}:latest"
+
+      - name: Build and Push API jobs
+        run: |-
+          docker build --target api-jobs -t "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_JOBS}}:latest" ./
+          docker push "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_JOBS}}:latest"
 
   deploy:
     runs-on: ubuntu-latest
