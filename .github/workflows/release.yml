@@ -82,5 +82,21 @@ jobs:
       - name: Set up Cloud SDK
         uses: "google-github-actions/setup-gcloud@v1"
 
-      - id: deploy
+      - name: Set up gcloud beta
+        run: gcloud components install beta
+
+      - id: deploy api-app
         run: gcloud run services replace .gcp/hydradx_api_app.yml
+
+      - id: deploy api-jobs cache-rpc-block-height-job
+        run: |
+          gcloud beta run jobs deploy cache-rpc-block-height-job \
+            --set-env-vars=JOB_NAME=cache-rpc-block-height-job,GOOGLE_CLOUD_RUN_JOB=true \
+            --image=${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_JOBS}}:latest \
+            --region=${{env.GCP_REGION}} \
+            --max-retries=0 \
+            --parallelism=0 \
+            --memory=512Mi \
+            --cpu=1 \
+            --task-timeout=60s \
+            --vpc-connector=hydradx-api-connector
