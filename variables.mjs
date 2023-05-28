@@ -3,11 +3,12 @@ import { fileURLToPath } from "url";
 
 export const IS_DOCKER_RUN = process.env.DOCKER_RUN !== undefined;
 export const IS_GOOGLE_CLOUD_RUN = process.env.K_SERVICE !== undefined;
+export const IS_GCP_JOB = process.env.GOOGLE_CLOUD_RUN_JOB !== undefined;
 
 export const dirname = () => path.dirname(fileURLToPath(import.meta.url));
 
 export const redisUri = () => {
-  if (IS_GOOGLE_CLOUD_RUN) {
+  if (IS_GOOGLE_CLOUD_RUN || IS_GCP_JOB) {
     return "redis://10.130.48.5:6379";
   } else {
     return "redis://127.0.0.1:6379";
