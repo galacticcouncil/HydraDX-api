@@ -92,4 +92,4 @@ jobs:
         run: gcloud beta run jobs replace .gcp/jobs/cache_rpc_block_height_job.yml
 
       - name: deploy cache_coingecko_tickers_job
-        run: gcloud beta run jobs replace .gcp/jobs/.gcp/jobs/cache_coingecko_tickers_job.yml
+        run: gcloud beta run jobs replace .gcp/jobs/cache_coingecko_tickers_job.yml
