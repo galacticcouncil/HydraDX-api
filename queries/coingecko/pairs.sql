@@ -14,14 +14,13 @@ combos AS (
         JOIN token_metadata tm ON la.asset_id = tm.id
         JOIN token_metadata tme ON lb.asset_id = tme.id
 )
-SELECT
-    CONCAT(asset_1_symbol || '_' || asset_2_symbol) AS ticker_id,
-    asset_1_symbol AS base,
-    asset_2_symbol AS target
+SELECT DISTINCT
+    CONCAT(LEAST(asset_1_symbol, asset_2_symbol), '_', GREATEST(asset_1_symbol, asset_2_symbol)) AS ticker_id,
+    LEAST(asset_1_symbol, asset_2_symbol) AS base,
+    GREATEST(asset_1_symbol, asset_2_symbol) AS target
 FROM
     combos c
 WHERE
     asset_1_symbol <> asset_2_symbol
 ORDER BY
-    1,
-    2
+    ticker_id, base;
