@@ -7,24 +7,11 @@ const TICKERS_QRY = fs
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/tickers/:baseCurrency-:targetCurrency",
+    url: "/tickers",
     method: ["GET"],
     schema: {
       description: "24h pricing and volume information for a given asset pair",
       tags: ["coingecko/v1"],
-      params: {
-        type: "object",
-        properties: {
-          baseCurrency: {
-            type: "string",
-            description: "Symbol of the base cryptoasset",
-          },
-          targetCurrency: {
-            type: "string",
-            description: "Symbol of the target cryptoasset",
-          },
-        },
-      },
       response: {
         200: {
           description: "Success Response",
@@ -45,7 +32,6 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const { baseCurrency, targetCurrency } = request.params;
       const cacheKey = request.url;
 
       const redis = await newRedisClient();
