@@ -1,5 +1,5 @@
 import path from "path";
-import { dirname, sqlUri } from "../variables.mjs";
+import { dirname, sqlUri } from "./variables.mjs";
 import AutoLoad from "@fastify/autoload";
 import Postgres from "@fastify/postgres";
 import Swagger from "@fastify/swagger";

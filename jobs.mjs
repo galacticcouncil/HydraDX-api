@@ -3,8 +3,8 @@ const { CLOUD_RUN_TASK_INDEX = 0, CLOUD_RUN_TASK_ATTEMPT = 0 } = process.env;
 // Retrieve User-defined env vars
 const { JOB_NAME } = process.env;
 
-import { JOBS } from "../variables.mjs";
-import { cacheRpcBlockHeightJob } from "./cache_rpc_block_height_job.mjs";
+import { JOBS } from "./variables.mjs";
+import { cacheRpcBlockHeightJob } from "./jobs/cache_rpc_block_height_job.mjs";
 
 const main = async () => {
   console.log(
