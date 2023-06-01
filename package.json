@@ -7,7 +7,7 @@
   "scripts": {
     "app": "node server.mjs",
     "app-dev": "fastify start -w -l info -P app.mjs",
-    "app-test": "tap \"app/test/**/*.test.mjs\"",
+    "app-test": "tap \"app/tests/**/*.test.mjs\"",
     "jobs": "node jobs.mjs",
     "lint": "npx prettier --check .",
     "format": "npx prettier --write ."
