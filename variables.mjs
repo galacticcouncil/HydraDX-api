@@ -18,7 +18,7 @@ export const redisUri = () => {
 export const rpcUri = () => "wss://rpc.hydradx.cloud";
 
 export const sqlUri = () => {
-  if (IS_GOOGLE_CLOUD_RUN) {
+  if (IS_GOOGLE_CLOUD_RUN || IS_GCP_JOB) {
     return "postgres://squid:squid@10.130.49.4:5432/squid";
   } else {
     return "postgres://squid:squid@127.0.0.1:5432/squid";
@@ -27,4 +27,12 @@ export const sqlUri = () => {
 
 export const JOBS = {
   cacheRpcBlockHeightJob: "cache-rpc-block-height-job",
+  cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
+};
+
+export const CACHE = {
+  coingeckoTickers: {
+    key: "coingecko_tickers",
+    expire_after: 60,
+  },
 };
