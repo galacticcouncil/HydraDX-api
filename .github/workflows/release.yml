@@ -88,5 +88,8 @@ jobs:
       - name: deploy api-app
         run: gcloud beta run services replace .gcp/hydradx_api_app.yml
 
-      - name: deploy all jobs
-        run: gcloud beta run jobs replace .gcp/jobs/*
+      - name: deploy cache_rpc_block_height_job
+        run: gcloud beta run jobs replace .gcp/jobs/cache_rpc_block_height_job.yml
+
+      - name: deploy cache_coingecko_tickers_job
+        run: gcloud beta run jobs replace .gcp/jobs/.gcp/jobs/cache_coingecko_tickers_job.yml
