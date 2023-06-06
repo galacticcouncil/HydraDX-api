@@ -1,6 +1,6 @@
 import fs from "fs";
-import { newRedisClient } from "../../../../clients/redis.mjs";
-import { CACHE } from "../../../../variables.mjs";
+import { CACHE_SETTINGS } from "../../../../variables.mjs";
+import { readSqlCacheOrUpdate } from "../../../../helpers/cache_helpers.mjs";
 
 const TICKERS_QRY = fs
   .readFileSync("./queries/coingecko/tickers.sql")
@@ -33,22 +33,11 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      let cacheKey = CACHE["coingeckoTickers"].key;
-      let cacheExpireAfter = CACHE["coingeckoTickers"].expire_after;
+      let cacheSetting = CACHE_SETTINGS["coingeckoTickers"];
 
-      const redis = await newRedisClient();
-      let cachedResult = await redis.get(cacheKey);
+      const result = await readSqlCacheOrUpdate(cacheSetting, TICKERS_QRY);
 
-      if (cachedResult === null) {
-        const { rows } = await fastify.pg.query(TICKERS_QRY);
-
-        await redis.set(cacheKey, JSON.stringify(rows));
-        await redis.expire(cacheKey, cacheExpireAfter);
-
-        reply.send(rows);
-      } else {
-        reply.send(JSON.parse(cachedResult));
-      }
+      reply.send(JSON.parse(result));
     },
   });
 };

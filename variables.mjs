@@ -30,7 +30,7 @@ export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
 };
 
-export const CACHE = {
+export const CACHE_SETTINGS = {
   coingeckoTickers: {
     key: "coingecko_tickers",
     expire_after: 60,
