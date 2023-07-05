@@ -1,3 +1,4 @@
+-- tickers
 WITH omnipool_trades_all AS(
   SELECT 
     substring(block_id, 4, 7):: numeric AS block, 

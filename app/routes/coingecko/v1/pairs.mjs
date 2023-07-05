@@ -1,9 +1,11 @@
-import { newRedisClient } from "../../../../clients/redis.mjs";
-import fs from "fs";
+import yesql from "yesql";
+import path from "path";
+import { dirname, CACHE_SETTINGS } from "../../../../variables.mjs";
+import { readSqlCacheOrUpdate } from "../../../../helpers/cache_helpers.mjs";
 
-const PAIRS_QRY = fs.readFileSync("./queries/coingecko/pairs.sql").toString();
-
-const CACHE_EXPIRE = 3600;
+const sqlQueries = yesql(path.join(dirname(), "queries/coingecko/v1/"), {
+  type: "pg",
+});
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -29,20 +31,14 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const cacheKey = request.url;
+      let cacheSetting = CACHE_SETTINGS["coingeckoV1Pairs"];
 
-      const redis = await newRedisClient();
-      let cache = await redis.get(cacheKey);
+      const result = await readSqlCacheOrUpdate(
+        cacheSetting,
+        sqlQueries.pairs()
+      );
 
-      if (cache === null) {
-        const { rows } = await fastify.pg.query(PAIRS_QRY);
-
-        await redis.set(cacheKey, JSON.stringify(rows));
-        await redis.expire(cacheKey, CACHE_EXPIRE);
-        reply.send(rows);
-      } else {
-        reply.send(JSON.parse(cache));
-      }
+      reply.send(JSON.parse(result));
     },
   });
 };

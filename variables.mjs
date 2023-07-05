@@ -31,8 +31,12 @@ export const JOBS = {
 };
 
 export const CACHE_SETTINGS = {
-  coingeckoTickers: {
-    key: "coingecko_tickers",
+  coingeckoV1Pairs: {
+    key: "coingecko_v1_pairs",
+    expire_after: 3600,
+  },
+  coingeckoV1Tickers: {
+    key: "coingecko_v1_tickers",
     expire_after: 60,
   },
 };

@@ -1,10 +1,11 @@
-import fs from "fs";
-import { CACHE_SETTINGS } from "../../../../variables.mjs";
+import yesql from "yesql";
+import path from "path";
+import { dirname, CACHE_SETTINGS } from "../../../../variables.mjs";
 import { readSqlCacheOrUpdate } from "../../../../helpers/cache_helpers.mjs";
 
-const TICKERS_QRY = fs
-  .readFileSync("./queries/coingecko/tickers.sql")
-  .toString();
+const sqlQueries = yesql(path.join(dirname(), "queries/coingecko/v1/"), {
+  type: "pg",
+});
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -33,9 +34,12 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      let cacheSetting = CACHE_SETTINGS["coingeckoTickers"];
+      let cacheSetting = CACHE_SETTINGS["coingeckoV1Tickers"];
 
-      const result = await readSqlCacheOrUpdate(cacheSetting, TICKERS_QRY);
+      const result = await readSqlCacheOrUpdate(
+        cacheSetting,
+        sqlQueries.tickers()
+      );
 
       reply.send(JSON.parse(result));
     },

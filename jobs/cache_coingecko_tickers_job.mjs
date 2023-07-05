@@ -1,13 +1,17 @@
-import fs from "fs";
-import { CACHE_SETTINGS } from "../variables.mjs";
+import yesql from "yesql";
+import path from "path";
+import { dirname, CACHE_SETTINGS } from "../variables.mjs";
 import { updateSqlCache } from "../helpers/cache_helpers.mjs";
 
-const TICKERS_QRY = fs
-  .readFileSync("./queries/coingecko/tickers.sql")
-  .toString();
+const sqlQueries = yesql(path.join(dirname(), "queries/coingecko/v1/"), {
+  type: "pg",
+});
 
 export const cacheCoingeckoTickersJob = async () => {
-  await updateSqlCache(CACHE_SETTINGS["coingeckoTickers"], TICKERS_QRY);
+  await updateSqlCache(
+    CACHE_SETTINGS["coingeckoV1Tickers"],
+    sqlQueries.tickers()
+  );
 
   return true;
 };

@@ -1,3 +1,4 @@
+-- pairs
 WITH listed AS (
     SELECT DISTINCT
         asset_id
