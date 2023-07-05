@@ -10,15 +10,15 @@ Docs: https://hydradx-api-app-2u5klwxkrq-ey.a.run.app/docs
 
 ### Dev
 
-`npm run dev`
+`npm run app-dev`
 
 ### Test
 
-`npm run test`
+`npm run app-test`
 
 ### Production
 
-`npm run start`
+`npm run app`
 
 ### Docker
 
