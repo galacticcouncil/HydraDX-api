@@ -1,4 +1,4 @@
--- pairs
+-- getPairs
 WITH listed AS (
     SELECT DISTINCT
         asset_id

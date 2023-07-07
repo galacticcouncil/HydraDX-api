@@ -10,7 +10,7 @@ const sqlQueries = yesql(path.join(dirname(), "queries/coingecko/v1/"), {
 export const cacheCoingeckoTickersJob = async () => {
   await updateSqlCache(
     CACHE_SETTINGS["coingeckoV1Tickers"],
-    sqlQueries.tickers()
+    sqlQueries.getTickers()
   );
 
   return true;

@@ -38,7 +38,7 @@ export default async (fastify, opts) => {
 
       const result = await readSqlCacheOrUpdate(
         cacheSetting,
-        sqlQueries.tickers()
+        sqlQueries.getTickers()
       );
 
       reply.send(JSON.parse(result));
