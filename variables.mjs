@@ -39,4 +39,8 @@ export const CACHE_SETTINGS = {
     key: "coingecko_v1_tickers",
     expire_after: 60,
   },
+  hydradxUiV1stats: {
+    key: "hydradx-ui_v1_stats",
+    expire_after: 60,
+  },
 };
