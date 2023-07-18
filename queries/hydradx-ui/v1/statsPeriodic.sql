@@ -9,11 +9,12 @@ with src_data AS (
     ELSE
       1=1
     END
+  AND timestamp > (SELECT MAX(timestamp) FROM stats_historical) - interval :sqlQuerySecondsLabel * 60
 ),
 series AS (
   SELECT
     generate_series(
-      to_timestamp(floor((extract('epoch' from (SELECT MIN(timestamp) FROM src_data)) / :sqlQuerySeconds )) * :sqlQuerySeconds),
+      to_timestamp(ceiling((extract('epoch' from (SELECT MIN(timestamp) FROM src_data)) / :sqlQuerySeconds )) * :sqlQuerySeconds),
       to_timestamp(floor((extract('epoch' from (SELECT MAX(timestamp) FROM src_data)) / :sqlQuerySeconds )) * :sqlQuerySeconds),
       :sqlQuerySecondsLabel
     ) AS segment
