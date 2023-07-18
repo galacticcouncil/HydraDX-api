@@ -1,11 +1,16 @@
 import PG from "pg";
-import { sqlUri } from "../variables.mjs";
+import { sqlPort, sqlHost, sqlUser, sqlPass, sqlDatabase } from "../variables.mjs";
 
 export async function newSqlClient() {
-  const client = new PG.Client({
-    connectionString: sqlUri(),
+  const pool = new PG.Pool({
+    host: sqlHost(),
+    port: sqlPort(),
+    user: sqlUser(),
+    password: sqlPass(),
+    database: sqlDatabase(),
+    max: 22
   });
 
-  await client.connect();
+  const client = await pool.connect();
   return client;
 }

@@ -17,13 +17,19 @@ export const redisUri = () => {
 
 export const rpcUri = () => "wss://rpc.hydradx.cloud";
 
-export const sqlUri = () => {
+export const sqlHost = () => {
   if (IS_GOOGLE_CLOUD_RUN || IS_GCP_JOB) {
-    return "postgres://squid:squid@10.130.49.4:5432/squid";
+    return "10.130.49.4";
   } else {
-    return "postgres://squid:squid@127.0.0.1:5432/squid";
+    return "127.0.0.1";
   }
-};
+}
+
+// TODO: move to env
+export const sqlPort = () => 5432;
+export const sqlUser = () => "squid";
+export const sqlPass = () => "squid";
+export const sqlDatabase = () => "squid";
 
 export const JOBS = {
   cacheRpcBlockHeightJob: "cache-rpc-block-height-job",

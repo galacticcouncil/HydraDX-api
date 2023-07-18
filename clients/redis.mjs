@@ -1,7 +1,7 @@
 import { createClient } from "redis";
 import { redisUri } from "../variables.mjs";
 
-async function newRedisClient() {
+export async function newRedisClient() {
   const client = createClient({
     url: redisUri(),
   });
@@ -11,5 +11,3 @@ async function newRedisClient() {
 
   return client;
 }
-
-export { newRedisClient };

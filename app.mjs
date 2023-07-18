@@ -1,7 +1,6 @@
 import path from "path";
-import { dirname, sqlUri } from "./variables.mjs";
+import { dirname } from "./variables.mjs";
 import AutoLoad from "@fastify/autoload";
-import Postgres from "@fastify/postgres";
 import Swagger from "@fastify/swagger";
 import SwaggerUi from "@fastify/swagger-ui";
 
@@ -35,10 +34,5 @@ export default async (fastify, opts) => {
   fastify.register(AutoLoad, {
     dir: path.join(dirname(), "app/routes"),
     options: Object.assign({}, opts),
-  });
-
-  // Connect to indexer DB
-  fastify.register(Postgres, {
-    connectionString: sqlUri(),
   });
 };
