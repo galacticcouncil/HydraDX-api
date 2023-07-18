@@ -23,7 +23,7 @@ export const sqlHost = () => {
   } else {
     return "127.0.0.1";
   }
-}
+};
 
 // TODO: move to env
 export const sqlPort = () => 5432;

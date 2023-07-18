@@ -1,10 +1,7 @@
 import { newRedisClient } from "../clients/redis.mjs";
 import { newSqlClient } from "../clients/sql.mjs";
 
-export async function readSqlCacheOrUpdate(
-  cacheSetting,
-  qry,
-) {
+export async function readSqlCacheOrUpdate(cacheSetting, qry) {
   const redisClient = await newRedisClient();
 
   let cachedResult = await redisClient.get(cacheSetting.key);
@@ -16,17 +13,13 @@ export async function readSqlCacheOrUpdate(
   return cachedResult;
 }
 
-export async function updateSqlCache(
-  cacheSetting,
-  qry,
-  redisClient = null
-) {
+export async function updateSqlCache(cacheSetting, qry, redisClient = null) {
   if (redisClient == null) {
     redisClient = await newRedisClient();
   }
 
   const sqlClient = await newSqlClient();
-  
+
   const { rows } = await sqlClient.query(qry);
   const cachedResult = JSON.stringify(rows);
 
