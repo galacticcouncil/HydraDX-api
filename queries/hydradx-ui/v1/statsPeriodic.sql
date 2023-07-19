@@ -9,7 +9,7 @@ with src_data AS (
     ELSE
       1=1
     END
-  -- AND timestamp > (SELECT MAX(timestamp) FROM stats_historical) - interval :sqlQuerySecondsLabel * 60
+  AND timestamp > (SELECT MAX(timestamp) FROM stats_historical) - :sqlQuerySecondsLabel::interval * 60
 ),
 series AS (
   SELECT
