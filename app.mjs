@@ -1,6 +1,7 @@
 import path from "path";
 import { dirname } from "./variables.mjs";
 import AutoLoad from "@fastify/autoload";
+import cors from "@fastify/cors";
 import Swagger from "@fastify/swagger";
 import SwaggerUi from "@fastify/swagger-ui";
 
@@ -34,5 +35,9 @@ export default async (fastify, opts) => {
   fastify.register(AutoLoad, {
     dir: path.join(dirname(), "app/routes"),
     options: Object.assign({}, opts),
+  });
+
+  fastify.register(cors, {
+    allowedHeaders: "*",
   });
 };
