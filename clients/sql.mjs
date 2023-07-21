@@ -14,7 +14,7 @@ export async function newSqlClient() {
     user: sqlUser(),
     password: sqlPass(),
     database: sqlDatabase(),
-    max: 22,
+    max: 500,
   });
 
   const client = await pool.connect();
