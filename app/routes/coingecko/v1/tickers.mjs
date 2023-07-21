@@ -28,6 +28,10 @@ export default async (fastify, opts) => {
               last_price: { type: "number" },
               base_volume: { type: "number" },
               target_volume: { type: "number" },
+              pool_id: { type: "string" },
+              liquidity_in_usd: { type: "number" },
+              high: { type: "number" },
+              low: { type: "number" }
             },
           },
         },
