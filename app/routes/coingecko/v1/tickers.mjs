@@ -31,7 +31,7 @@ export default async (fastify, opts) => {
               pool_id: { type: "string" },
               liquidity_in_usd: { type: "number" },
               high: { type: "number" },
-              low: { type: "number" }
+              low: { type: "number" },
             },
           },
         },
