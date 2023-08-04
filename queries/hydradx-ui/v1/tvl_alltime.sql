@@ -41,7 +41,6 @@ FROM
   JOIN token_metadata tm ON oa.asset_id = tm.id
 WHERE 
   src.rn = 1
-  --AND symbol = 'DAI'
 GROUP BY 
   s.start
 ORDER BY 
