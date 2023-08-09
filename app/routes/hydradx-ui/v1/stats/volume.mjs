@@ -1,21 +1,21 @@
 import yesql from "yesql";
 import path from "path";
-import { dirname } from "../../../../variables.mjs";
-import { CACHE_SETTINGS } from "../../../../variables.mjs";
-import { readSqlCacheOrUpdate } from "../../../../helpers/cache_helpers.mjs";
+import { dirname } from "../../../../../variables.mjs";
+import { CACHE_SETTINGS } from "../../../../../variables.mjs";
+import { readSqlCacheOrUpdate } from "../../../../../helpers/cache_helpers.mjs";
 
-const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/"), {
+const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
   type: "pg",
 });
 
-const VALID_TIMEFRAMES = ["all", "weekly", "daily"];
+const VALID_TIMEFRAMES = ["hourly", "daily"];
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/stats/:assetTicker?",
+    url: "/volume/:assetTicker?",
     method: ["GET"],
     schema: {
-      description: "Omnipool asset data for the HydraDX stats page.",
+      description: "Omnipool trading volume for the HydraDX stats page.",
       tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
@@ -29,7 +29,7 @@ export default async (fastify, opts) => {
       querystring: {
         type: "object",
         properties: {
-          timeframe: { type: "string", enum: VALID_TIMEFRAMES, default: "all" },
+          timeframe: { type: "string", enum: VALID_TIMEFRAMES, default: "daily" },
         },
       },
       response: {
@@ -39,11 +39,8 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              interval: { type: "string" },
+              datetime: { type: "string" },
               volume_usd: { type: "number" },
-              tvl_usd: { type: "number" },
-              tvl_pol_usd: { type: "number" },
-              volume_roll_24_usd: { type: "number" },
             },
           },
         },
@@ -55,18 +52,9 @@ export default async (fastify, opts) => {
         : null;
       const timeframe = request.query.timeframe;
 
-      const sqlQuerySeconds = timeframe == "weekly" ? 10080 : 1440;
-      const sqlQuerySecondsLabel = sqlQuerySeconds.toString() + "s";
-      const sqlQuery =
-        timeframe == "all"
-          ? sqlQueries.statsAll({ assetTicker })
-          : sqlQueries.statsPeriodic({
-              assetTicker,
-              sqlQuerySeconds,
-              sqlQuerySecondsLabel,
-            });
+      const sqlQuery = sqlQueries.statsVolume({ assetTicker, timeframe })
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1stats"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsVolume"] };
       cacheSetting.key = cacheSetting.key + "_" + assetTicker + "_" + timeframe;
 
       const result = await readSqlCacheOrUpdate(cacheSetting, sqlQuery);

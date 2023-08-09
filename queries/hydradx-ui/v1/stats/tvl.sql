@@ -1,4 +1,6 @@
--- Returns 60 rows with all time TVL in USD
+-- statsTvl
+
+/* Returns 60 rows with all time TVL in USD */
 
 WITH min_max AS (
   SELECT 
@@ -41,7 +43,12 @@ FROM
   JOIN token_metadata tm ON oa.asset_id = tm.id
 WHERE 
   src.rn = 1
-  AND symbol = :assetTicker
+  AND CASE
+      WHEN :assetTicker::text IS NOT NULL
+        THEN symbol = :assetTicker
+      ELSE
+        true
+      END
 GROUP BY 
   s.start
 ORDER BY 
