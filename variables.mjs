@@ -32,7 +32,6 @@ export const sqlPass = () => "squid";
 export const sqlDatabase = () => "squid";
 
 export const JOBS = {
-  cacheRpcBlockHeightJob: "cache-rpc-block-height-job",
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
   cacheHydradxUiStatsTvlJob: "cache-hydradx-ui-stats-tvl-job",
   cacheHydradxUiStatsVolumeJob: "cache-hydradx-ui-stats-volume-job",

@@ -2,7 +2,8 @@ import yesql from "yesql";
 import path from "path";
 import { dirname } from "../../../../../variables.mjs";
 import { CACHE_SETTINGS } from "../../../../../variables.mjs";
-import { readSqlCacheOrUpdate } from "../../../../../helpers/cache_helpers.mjs";
+import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
+import { getAssets } from "../../../../../helpers/asset_helpers.mjs";
 
 const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
   type: "pg",
@@ -48,7 +49,7 @@ export default async (fastify, opts) => {
       let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsTvl"] };
       cacheSetting.key = cacheSetting.key + "_" + assetTicker;
 
-      const result = await readSqlCacheOrUpdate(cacheSetting, sqlQuery);
+      const result = await cachedFetch(fastify.pg, cacheSetting, sqlQuery);
 
       reply.send(JSON.parse(result));
     },

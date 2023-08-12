@@ -4,12 +4,13 @@ const { CLOUD_RUN_TASK_INDEX = 0, CLOUD_RUN_TASK_ATTEMPT = 0 } = process.env;
 const { JOB_NAME, CONTINUOUS_JOB } = process.env;
 
 import { JOBS } from "./variables.mjs";
-import { cacheRpcBlockHeightJob } from "./jobs/cache_rpc_block_height_job.mjs";
 import { cacheCoingeckoTickersJob } from "./jobs/cache_coingecko_tickers_job.mjs";
 import { cacheHydradxUiStatsTvlJob } from "./jobs/cache_hydradx-ui_stats_tvl_job.mjs";
 import { cacheHydradxUiStatsVolumeJob } from "./jobs/cache_hydradx-ui_stats_volume_job.mjs";
 import { cacheDefillamaTvlJob } from "./jobs/cache_defillama_tvl_job.mjs";
 import { cacheDefillamaVolumeJob } from "./jobs/cache_defillama_volume_job.mjs";
+import { newSqlClient } from "./clients/sql.mjs";
+import { newRedisClient } from "./clients/redis.mjs";
 
 const main = async () => {
   console.log(
@@ -29,29 +30,28 @@ const main = async () => {
 async function executeJob(job_name) {
   console.log(`Executing ${job_name}..`);
 
+  const sqlClient = await newSqlClient();
+  const redisClient = await newRedisClient();
+
   switch (job_name) {
-    case JOBS["cacheRpcBlockHeightJob"]: {
-      await cacheRpcBlockHeightJob();
-      break;
-    }
     case JOBS["cacheCoingeckoTickersJob"]: {
-      await cacheCoingeckoTickersJob();
+      await cacheCoingeckoTickersJob(sqlClient, redisClient);
       break;
     }
     case JOBS["cacheHydradxUiStatsTvlJob"]: {
-      await cacheHydradxUiStatsTvlJob();
+      await cacheHydradxUiStatsTvlJob(sqlClient, redisClient);
       break;
     }
     case JOBS["cacheHydradxUiStatsVolumeJob"]: {
-      await cacheHydradxUiStatsVolumeJob();
+      await cacheHydradxUiStatsVolumeJob(sqlClient, redisClient);
       break;
     }
     case JOBS["cacheDefillamaTvlJob"]: {
-      await cacheDefillamaTvlJob();
+      await cacheDefillamaTvlJob(sqlClient, redisClient);
       break;
     }
     case JOBS["cacheDefillamaVolumeJob"]: {
-      await cacheDefillamaVolumeJob();
+      await cacheDefillamaVolumeJob(sqlClient, redisClient);
       break;
     }
     default: {
@@ -64,6 +64,9 @@ async function executeJob(job_name) {
   if (CONTINUOUS_JOB == "true") {
     return executeJob(job_name);
   } else {
+    await sqlClient.release();
+    await redisClient.disconnect();
+
     return true;
   }
 }
