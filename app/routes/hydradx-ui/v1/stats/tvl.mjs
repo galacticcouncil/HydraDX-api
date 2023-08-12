@@ -11,7 +11,7 @@ const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/tvl/:assetTicker?",
+    url: "/tvl/:asset?",
     method: ["GET"],
     schema: {
       description: "Omnipool TVL for the HydraDX stats page.",
@@ -19,7 +19,7 @@ export default async (fastify, opts) => {
       params: {
         type: "object",
         properties: {
-          assetTicker: {
+          asset: {
             type: "string",
             description: "Ticker of the asset. Leave empty for all assets.",
           },
@@ -40,14 +40,14 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const assetTicker = request.params.assetTicker
-        ? request.params.assetTicker
+      const asset = request.params.asset
+        ? request.params.asset
         : null;
 
-      const sqlQuery = sqlQueries.statsTvl({ assetTicker });
+      const sqlQuery = sqlQueries.statsTvl({ asset });
 
       let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsTvl"] };
-      cacheSetting.key = cacheSetting.key + "_" + assetTicker;
+      cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(
         fastify.pg,

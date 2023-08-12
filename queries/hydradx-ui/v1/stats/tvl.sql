@@ -44,8 +44,8 @@ FROM
 WHERE 
   src.rn = 1
   AND CASE
-      WHEN :assetTicker::text IS NOT NULL
-        THEN symbol = :assetTicker
+      WHEN :asset::text IS NOT NULL
+        THEN symbol = :asset
       ELSE
         true
       END
