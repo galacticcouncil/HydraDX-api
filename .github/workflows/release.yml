@@ -96,7 +96,7 @@ jobs:
 
       - name: deploy cache_hydradx-ui_stats_volume_job
         run: gcloud beta run jobs replace .gcp/jobs/cache_hydradx-ui_stats_volume_job.yml
-      
+
       - name: deploy cache_defillama_volume_job
         run: gcloud beta run jobs replace .gcp/jobs/cache_hydradx-cache_defillama_volume_job.yml
 

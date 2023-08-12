@@ -1,8 +1,9 @@
 import path from "path";
-import { dirname } from "./variables.mjs";
+import { dirname, redisUri } from "./variables.mjs";
 import AutoLoad from "@fastify/autoload";
 import cors from "@fastify/cors";
 import PG from "@fastify/postgres";
+import Redis from "@fastify/redis";
 import Swagger from "@fastify/swagger";
 import SwaggerUi from "@fastify/swagger-ui";
 
@@ -46,16 +47,18 @@ export default async (fastify, opts) => {
     options: Object.assign({}, opts),
   });
 
-  
   fastify.register(PG, {
-    // connectionString: 'postgres://postgres@localhost/postgres'
     host: sqlHost(),
     port: sqlPort(),
     user: sqlUser(),
     password: sqlPass(),
     database: sqlDatabase(),
     max: 500,
-  })
+  });
+
+  fastify.register(Redis, {
+    url: redisUri(),
+  });
 
   fastify.register(cors, {
     allowedHeaders: "*",

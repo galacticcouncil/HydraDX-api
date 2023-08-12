@@ -16,4 +16,4 @@ export async function cacheDefillamaTvlJob(sqlClient, redisClient) {
   );
 
   return true;
-};
+}

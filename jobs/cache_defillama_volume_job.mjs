@@ -16,4 +16,4 @@ export async function cacheDefillamaVolumeJob(sqlClient, redisClient) {
   );
 
   return true;
-};
+}

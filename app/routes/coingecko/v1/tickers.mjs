@@ -40,7 +40,12 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       let cacheSetting = CACHE_SETTINGS["coingeckoV1Tickers"];
 
-      const result = await cachedFetch(fastify.pg, cacheSetting, sqlQueries.getTickers());
+      const result = await cachedFetch(
+        fastify.pg,
+        fastify.redis,
+        cacheSetting,
+        sqlQueries.getTickers()
+      );
 
       reply.send(JSON.parse(result));
     },

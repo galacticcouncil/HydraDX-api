@@ -49,7 +49,12 @@ export default async (fastify, opts) => {
       let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsTvl"] };
       cacheSetting.key = cacheSetting.key + "_" + assetTicker;
 
-      const result = await cachedFetch(fastify.pg, cacheSetting, sqlQuery);
+      const result = await cachedFetch(
+        fastify.pg,
+        fastify.redis,
+        cacheSetting,
+        sqlQuery
+      );
 
       reply.send(JSON.parse(result));
     },

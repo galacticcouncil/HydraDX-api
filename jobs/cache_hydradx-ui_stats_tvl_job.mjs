@@ -16,4 +16,4 @@ export async function cacheHydradxUiStatsTvlJob(sqlClient, redisClient) {
   );
 
   return true;
-};
+}

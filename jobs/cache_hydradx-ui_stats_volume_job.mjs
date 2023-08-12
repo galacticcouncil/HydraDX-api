@@ -16,4 +16,4 @@ export async function cacheHydradxUiStatsVolumeJob(sqlClient, redisClient) {
   );
 
   return true;
-};
+}

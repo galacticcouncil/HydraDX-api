@@ -16,4 +16,4 @@ export async function cacheCoingeckoTickersJob(sqlClient, redisClient) {
   );
 
   return true;
-};
+}

@@ -29,7 +29,11 @@ export default async (fastify, opts) => {
       querystring: {
         type: "object",
         properties: {
-          timeframe: { type: "string", enum: VALID_TIMEFRAMES, default: "daily" },
+          timeframe: {
+            type: "string",
+            enum: VALID_TIMEFRAMES,
+            default: "daily",
+          },
         },
       },
       response: {
@@ -52,12 +56,17 @@ export default async (fastify, opts) => {
         : null;
       const timeframe = request.query.timeframe;
 
-      const sqlQuery = sqlQueries.statsVolume({ assetTicker, timeframe })
+      const sqlQuery = sqlQueries.statsVolume({ assetTicker, timeframe });
 
       let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsVolume"] };
       cacheSetting.key = cacheSetting.key + "_" + assetTicker + "_" + timeframe;
 
-      const result = await cachedFetch(fastify.pg, cacheSetting, sqlQuery);
+      const result = await cachedFetch(
+        fastify.pg,
+        fastify.redis,
+        cacheSetting,
+        sqlQuery
+      );
 
       reply.send(JSON.parse(result));
     },

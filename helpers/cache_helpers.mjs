@@ -1,8 +1,4 @@
-import { newRedisClient } from "../clients/redis.mjs";
-
-export async function cachedFetch(sqlClient, cacheSetting, qry) {
-  const redisClient = await newRedisClient();
-
+export async function cachedFetch(sqlClient, redisClient, cacheSetting, qry) {
   let cachedResult = await redisClient.get(cacheSetting.key);
 
   if (cachedResult == null) {
