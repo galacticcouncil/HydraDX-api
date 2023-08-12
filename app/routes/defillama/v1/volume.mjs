@@ -10,7 +10,7 @@ const sqlQueries = yesql(path.join(dirname(), "queries/defillama/v1/"), {
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/volume/:assetTicker?",
+    url: "/volume/:asset?",
     method: ["GET"],
     schema: {
       description: "Actual 24h rolling trading volume for DefiLlama.",
@@ -18,7 +18,7 @@ export default async (fastify, opts) => {
       params: {
         type: "object",
         properties: {
-          assetTicker: {
+          asset: {
             type: "string",
             description: "Ticker of the asset. Leave empty for all assets.",
           },
@@ -38,14 +38,14 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const assetTicker = request.params.assetTicker
-        ? request.params.assetTicker
+      const asset = request.params.asset
+        ? request.params.asset
         : null;
 
-      const sqlQuery = sqlQueries.defillamaVolume({ assetTicker });
+      const sqlQuery = sqlQueries.defillamaVolume({ asset });
 
       let cacheSetting = { ...CACHE_SETTINGS["defillamaV1Volume"] };
-      cacheSetting.key = cacheSetting.key + "_" + assetTicker;
+      cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(
         fastify.pg,

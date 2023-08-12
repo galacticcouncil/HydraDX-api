@@ -34,9 +34,6 @@ export const sqlDatabase = () => "squid";
 export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
   cacheHydradxUiStatsTvlJob: "cache-hydradx-ui-stats-tvl-job",
-  cacheHydradxUiStatsVolumeJob: "cache-hydradx-ui-stats-volume-job",
-  cacheDefillamaTvlJob: "cache-defillama-tvl-job",
-  cacheDefillamaVolumeJob: "cache-defillama-volume-job",
 };
 
 export const CACHE_SETTINGS = {
