@@ -19,8 +19,8 @@ WITH CombinedQuery AS (
     timestamp between now() - interval '30d' and (current_date::timestamp) - interval '1 microsecond'
     AND
      CASE
-      WHEN :assetTicker::text IS NOT NULL
-        THEN symbol = :assetTicker
+      WHEN :asset::text IS NOT NULL
+        THEN symbol = :asset
       ELSE
         true
     END
@@ -36,8 +36,8 @@ WITH CombinedQuery AS (
     timestamp between now() - interval '24h' and date_trunc('hour', now()) - interval '1 microsecond'
     AND
      CASE
-      WHEN :assetTicker::text IS NOT NULL
-        THEN symbol = :assetTicker
+      WHEN :asset::text IS NOT NULL
+        THEN symbol = :asset
       ELSE
         true
     END

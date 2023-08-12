@@ -21,7 +21,7 @@ export default async (fastify, opts) => {
         properties: {
           asset: {
             type: "string",
-            description: "Ticker of the asset. Leave empty for all assets.",
+            description: "Asset (symbol). Leave empty for all assets.",
           },
         },
       },

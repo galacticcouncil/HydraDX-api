@@ -8,11 +8,11 @@ const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
   type: "pg",
 });
 
-const VALID_TIMEFRAMES = ["hourly", "daily"];
+export const VALID_TIMEFRAMES = ["hourly", "daily"];
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/volume/:assetTicker?",
+    url: "/volume/:asset?",
     method: ["GET"],
     schema: {
       description: "Omnipool trading volume for the HydraDX stats page.",
@@ -20,9 +20,9 @@ export default async (fastify, opts) => {
       params: {
         type: "object",
         properties: {
-          assetTicker: {
+          asset: {
             type: "string",
-            description: "Ticker of the asset. Leave empty for all assets.",
+            description: "Asset (symbol). Leave empty for all assets.",
           },
         },
       },
@@ -51,15 +51,15 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const assetTicker = request.params.assetTicker
-        ? request.params.assetTicker
+      const asset = request.params.asset
+        ? request.params.asset
         : null;
       const timeframe = request.query.timeframe;
 
-      const sqlQuery = sqlQueries.statsVolume({ assetTicker, timeframe });
+      const sqlQuery = sqlQueries.statsVolume({ asset, timeframe });
 
       let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsVolume"] };
-      cacheSetting.key = cacheSetting.key + "_" + assetTicker + "_" + timeframe;
+      cacheSetting.key = cacheSetting.key + "_" + asset + "_" + timeframe;
 
       const result = await cachedFetch(
         fastify.pg,
