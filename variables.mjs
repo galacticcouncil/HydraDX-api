@@ -39,26 +39,26 @@ export const JOBS = {
 export const CACHE_SETTINGS = {
   coingeckoV1Pairs: {
     key: "coingecko_v1_pairs",
-    expire_after: 3600,
+    expire_after: 60 * 60,
   },
   coingeckoV1Tickers: {
     key: "coingecko_v1_tickers",
-    expire_after: 700,
+    expire_after: 12 * 60,
   },
   hydradxUiV1StatsTvl: {
     key: "hydradx-ui_v1_stats_tvl",
-    expire_after: 3600,
+    expire_after: 60 * 60,
   },
   hydradxUiV1StatsVolume: {
     key: "hydradx-ui_v1_stats_volume",
-    expire_after: 700,
+    expire_after: 10 * 60,
   },
   defillamaV1Tvl: {
     key: "defillama_v1_tvl",
-    expire_after: 700,
+    expire_after: 10 * 60,
   },
   defillamaV1Volume: {
     key: "defillama_v1_volume",
-    expire_after: 700,
+    expire_after: 10 * 60,
   },
 };

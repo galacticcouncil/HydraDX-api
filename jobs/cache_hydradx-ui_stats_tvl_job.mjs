@@ -13,7 +13,7 @@ export async function cacheHydradxUiStatsTvlJob(sqlClient, redisClient) {
   // Add null at beginning for all assets
   assets.unshift(null);
 
-  for(let a in assets) {
+  for (let a in assets) {
     await cacheAsset(assets[a], sqlClient, redisClient);
   }
 

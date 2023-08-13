@@ -13,14 +13,14 @@ export default async (fastify, opts) => {
     url: "/tvl/:asset?",
     method: ["GET"],
     schema: {
-      description: "Actual Omnipool TVL for DefiLlama.",
+      description: "Current Omnipool TVL for DefiLlama.",
       tags: ["defillama/v1"],
       params: {
         type: "object",
         properties: {
           asset: {
             type: "string",
-            description: "Ticker of the asset. Leave empty for all assets.",
+            description: "Asset (symbol). Leave empty for all assets.",
           },
         },
       },
@@ -38,9 +38,7 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const asset = request.params.asset
-        ? request.params.asset
-        : null;
+      const asset = request.params.asset ? request.params.asset : null;
 
       const sqlQuery = sqlQueries.defillamaTvl({ asset });
 
