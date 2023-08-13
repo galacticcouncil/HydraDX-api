@@ -1,7 +1,7 @@
 import yesql from "yesql";
 import path from "path";
 import { dirname, CACHE_SETTINGS } from "../../../../variables.mjs";
-import { readSqlCacheOrUpdate } from "../../../../helpers/cache_helpers.mjs";
+import { cachedFetch } from "../../../../helpers/cache_helpers.mjs";
 
 const sqlQueries = yesql(path.join(dirname(), "queries/coingecko/v1/"), {
   type: "pg",
@@ -33,12 +33,14 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       let cacheSetting = CACHE_SETTINGS["coingeckoV1Pairs"];
 
-      const result = await readSqlCacheOrUpdate(
+      const result = await cachedFetch(
+        fastify.pg,
+        fastify.redis,
         cacheSetting,
         sqlQueries.getPairs()
       );
 
-      reply.send(JSON.parse(result));
+      reply.send(result);
     },
   });
 };

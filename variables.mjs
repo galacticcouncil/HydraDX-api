@@ -32,21 +32,33 @@ export const sqlPass = () => "squid";
 export const sqlDatabase = () => "squid";
 
 export const JOBS = {
-  cacheRpcBlockHeightJob: "cache-rpc-block-height-job",
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
+  cacheHydradxUiStatsTvlJob: "cache-hydradx-ui-stats-tvl-job",
 };
 
 export const CACHE_SETTINGS = {
   coingeckoV1Pairs: {
     key: "coingecko_v1_pairs",
-    expire_after: 3600,
+    expire_after: 60 * 60,
   },
   coingeckoV1Tickers: {
     key: "coingecko_v1_tickers",
-    expire_after: 700,
+    expire_after: 12 * 60,
   },
-  hydradxUiV1stats: {
-    key: "hydradx-ui_v1_stats",
-    expire_after: 60,
+  hydradxUiV1StatsTvl: {
+    key: "hydradx-ui_v1_stats_tvl",
+    expire_after: 60 * 60,
+  },
+  hydradxUiV1StatsVolume: {
+    key: "hydradx-ui_v1_stats_volume",
+    expire_after: 10 * 60,
+  },
+  defillamaV1Tvl: {
+    key: "defillama_v1_tvl",
+    expire_after: 10 * 60,
+  },
+  defillamaV1Volume: {
+    key: "defillama_v1_volume",
+    expire_after: 10 * 60,
   },
 };
