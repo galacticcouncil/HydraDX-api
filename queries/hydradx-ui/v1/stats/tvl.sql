@@ -34,7 +34,7 @@ src_data AS (
     lrna_every_block leb, launch 
 )
 SELECT 
-  s.start as interval,
+  s.start as timestamp,
   round(sum(oa.hub_reserve/10^12 * src.last_lrna_price)) as tvl_usd
 FROM 
   src_data src
@@ -52,4 +52,5 @@ WHERE
 GROUP BY 
   s.start
 ORDER BY 
-  s.start;
+  s.start
+LIMIT 60;
