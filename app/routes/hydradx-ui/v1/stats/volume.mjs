@@ -43,7 +43,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              datetime: { type: "string" },
+              timestamp: { type: "string" },
               volume_usd: { type: "number" },
             },
           },

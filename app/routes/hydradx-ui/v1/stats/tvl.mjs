@@ -32,7 +32,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              interval: { type: "string" },
+              timestamp: { type: "string" },
               tvl_usd: { type: "number" },
             },
           },
