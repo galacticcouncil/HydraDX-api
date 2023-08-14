@@ -10,7 +10,7 @@ Returns 30 rows with volume in USD, one daily for last 30d, last record is for y
 
 WITH CombinedQuery AS (
   SELECT 
-    timestamp::date as timestamp,
+    timestamp::date as "timestamp",
     round(sum(volume_usd)/2) as volume_usd,
     'daily' as type
   FROM 
@@ -27,7 +27,7 @@ WITH CombinedQuery AS (
   GROUP BY 1
   UNION ALL
   SELECT 
-    date_trunc('hour', timestamp) as timestamp,
+    date_trunc('hour', timestamp) as "timestamp",
     round(sum(volume_usd)/2) as volume_usd,
     'hourly' as type
   FROM 
