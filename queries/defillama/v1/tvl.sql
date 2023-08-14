@@ -7,9 +7,12 @@ SELECT
 FROM 
   lrna_every_block leb
   JOIN (
-    SELECT MAX(height) as max_height
-    FROM lrna_every_block
-  ) max_leb ON leb.height = max_leb.max_height
+    SELECT 
+      LEAST(max_leb.max_height, max_oa.max_block) AS joined_height
+    FROM 
+      (SELECT MAX(height) as max_height FROM lrna_every_block) max_leb,
+      (SELECT MAX(block) as max_block FROM omnipool_asset) max_oa
+  ) subq ON leb.height = subq.joined_height
   JOIN omnipool_asset oa ON leb.height = oa.block
   JOIN token_metadata tm ON oa.asset_id = tm.id
 WHERE CASE
