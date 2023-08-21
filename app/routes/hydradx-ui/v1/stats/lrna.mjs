@@ -16,15 +16,6 @@ export default async (fastify, opts) => {
     schema: {
       description: "LRNA price & supply for the HydraDX stats page.",
       tags: ["hydradx-ui/v1"],
-      params: {
-        type: "object",
-        properties: {
-          asset: {
-            type: "string",
-            description: "Asset (symbol). Leave empty for all assets.",
-          },
-        },
-      },
       response: {
         200: {
           description: "Success Response",
