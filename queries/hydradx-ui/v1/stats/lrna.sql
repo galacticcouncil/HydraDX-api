@@ -1,6 +1,6 @@
--- statsTvl
+-- statsLrna
 
-/* Returns 60 rows with all time TVL in USD */
+/* Returns 60 rows with all time historical LRNA price in USD */
 
 WITH min_max AS (
     SELECT 
@@ -36,7 +36,8 @@ src_data AS (
 ordered_data AS (
     SELECT 
         s.start as "timestamp",
-        round(sum(oa.hub_reserve/10^12 * src.last_lrna_price)) as tvl_usd,
+        round(sum(oa.hub_reserve/10^12)) as lrna_supply,
+        round(avg(src.last_lrna_price)::numeric, 2) as lrna_price,
         ROW_NUMBER() OVER(ORDER BY s.start DESC) as desc_rn
     FROM 
         src_data src
@@ -45,12 +46,6 @@ ordered_data AS (
         JOIN token_metadata tm ON oa.asset_id = tm.id
     WHERE 
         src.rn = 1
-        AND CASE
-            WHEN :asset::text IS NOT NULL
-            THEN symbol = :asset
-            ELSE
-            true
-            END
     GROUP BY 
         s.start
 )
@@ -59,7 +54,8 @@ SELECT
         WHEN desc_rn = 1 THEN TO_CHAR(now()::timestamp, 'YYYY-MM-DD HH24:MI:SS')
         ELSE TO_CHAR("timestamp", 'YYYY-MM-DD HH24:MI:SS')
     END AS "timestamp",
-    tvl_usd
+    lrna_supply,
+    lrna_price
 FROM 
     ordered_data
 ORDER BY 
