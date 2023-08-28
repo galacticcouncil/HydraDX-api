@@ -178,7 +178,7 @@ lrna_in_dai AS (
     alltime_bal a 
     JOIN hub_reserve hr ON a.asset_id = hr.asset_id 
   WHERE 
-    symbol = 'DAI'
+    hr.asset_id = '2'
 ), 
 spot AS (
   SELECT 
@@ -213,13 +213,19 @@ combos AS (
 ), 
 pairs AS (
   SELECT 
-    DISTINCT CASE WHEN asset_1_id > asset_2_id THEN CONCAT(
+    DISTINCT
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN CONCAT(
       asset_1_symbol, '_', asset_2_symbol
     ) ELSE CONCAT(
       asset_2_symbol, '_', asset_1_symbol
-    ) END AS ticker_id, 
-    CASE WHEN asset_1_id > asset_2_id THEN asset_1_symbol ELSE asset_2_symbol END AS base_currency, 
-    CASE WHEN asset_1_id > asset_2_id THEN asset_2_symbol ELSE asset_1_symbol END AS target_currency 
+    ) END AS ticker_id,
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN CONCAT(
+      asset_1_id, '_', asset_2_id
+    ) ELSE CONCAT(
+      asset_2_id, '_', asset_1_id
+    ) END AS asset_ids_concat,
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN asset_1_symbol ELSE asset_2_symbol END AS base_currency, 
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN asset_2_symbol ELSE asset_1_symbol END AS target_currency 
   FROM 
     combos c 
   WHERE 
@@ -259,22 +265,28 @@ pair_volumes AS (
 ), 
 commanding_asset AS (
   select 
-    CASE WHEN asset_1 > asset_2 THEN CONCAT(
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN CONCAT(
       asset_1_symbol, '_', asset_2_symbol
     ) ELSE CONCAT(
       asset_2_symbol, '_', asset_1_symbol
-    ) END AS ticker_id, 
-    CASE WHEN asset_1 > asset_2 THEN base_volume ELSE target_volume END AS base_volume, 
-    CASE WHEN asset_1 > asset_2 THEN target_volume ELSE base_volume END AS target_volume, 
+    ) END AS ticker_id,
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN CONCAT(
+      asset_1, '_', asset_2
+    ) ELSE CONCAT(
+      asset_2, '_', asset_1
+    ) END AS asset_ids_concat,
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN base_volume ELSE target_volume END AS base_volume, 
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN target_volume ELSE base_volume END AS target_volume, 
     asset_1_symbol, 
     asset_2_symbol, 
-    CASE WHEN asset_1 > asset_2 THEN liq1 ELSE liq2 END AS liquidity 
+    CASE WHEN asset_1_symbol > asset_2_symbol THEN liq1 ELSE liq2 END AS liquidity 
   FROM 
     pair_volumes
 ), 
 dedup_pair_vol AS (
   select 
-    ticker_id, 
+    ticker_id,
+    asset_ids_concat,
     liquidity, 
     SUM(base_volume) AS base_volume, 
     SUM(target_volume) AS target_volume 
@@ -282,19 +294,21 @@ dedup_pair_vol AS (
     commanding_asset 
   group by 
     1, 
-    2 
+    2,
+    3
   order by 
     1
 ), 
 command_last_trade AS(
   select 
-    CASE WHEN asset_in > asset_out THEN CONCAT(tm.symbol, '_', tme.symbol) ELSE CONCAT(tme.symbol, '_', tm.symbol) END AS ticker_id, 
-    CASE WHEN asset_in > asset_out THEN tm.id ELSE tme.id END AS asset_in, 
-    CASE WHEN asset_in > asset_out THEN tme.id ELSE tm.id END AS asset_out, 
-    CASE WHEN asset_in > asset_out THEN amount_in ELSE amount_out END AS amount_in, 
-    CASE WHEN asset_in > asset_out THEN amount_out ELSE amount_in END AS amount_out, 
-    CASE WHEN asset_in > asset_out THEN tm.decimals ELSE tme.decimals END AS decimals_in, 
-    CASE WHEN asset_in > asset_out THEN tme.decimals ELSE tm.decimals END AS decimals_out, 
+    CASE WHEN tm.symbol > tme.symbol THEN CONCAT(tm.symbol, '_', tme.symbol) ELSE CONCAT(tme.symbol, '_', tm.symbol) END AS ticker_id,
+    CASE WHEN tm.symbol > tme.symbol THEN CONCAT(tm.id, '_', tme.id) ELSE CONCAT(tme.id, '_', tm.id) END AS asset_ids_concat, 
+    CASE WHEN tm.symbol > tme.symbol THEN tm.id ELSE tme.id END AS asset_in, 
+    CASE WHEN tm.symbol > tme.symbol THEN tme.id ELSE tm.id END AS asset_out, 
+    CASE WHEN tm.symbol > tme.symbol THEN amount_in ELSE amount_out END AS amount_in, 
+    CASE WHEN tm.symbol > tme.symbol THEN amount_out ELSE amount_in END AS amount_out, 
+    CASE WHEN tm.symbol > tme.symbol THEN tm.decimals ELSE tme.decimals END AS decimals_in, 
+    CASE WHEN tm.symbol > tme.symbol THEN tme.decimals ELSE tm.decimals END AS decimals_out, 
     block, 
     timestamp 
   FROM 
@@ -314,7 +328,8 @@ trade_rank AS (
     amount_out, 
     ticker_id, 
     decimals_in, 
-    decimals_out 
+    decimals_out,
+    asset_ids_concat
   from 
     command_last_trade
 ), 
@@ -336,7 +351,8 @@ highs_lows AS (
     amount_out, 
     ticker_id, 
     decimals_in, 
-    decimals_out 
+    decimals_out,
+    asset_ids_concat
   from 
     command_last_trade 
   where 
@@ -344,7 +360,8 @@ highs_lows AS (
 ), 
 last_trades AS (
   select 
-    ticker_id, 
+    ticker_id,
+    asset_ids_concat,
     (
       amount_in /(10 ^ decimals_in)
     ) / (
@@ -357,7 +374,8 @@ last_trades AS (
 ), 
 lows AS (
   select 
-    ticker_id, 
+    ticker_id,
+    asset_ids_concat,
     (
       amount_in /(10 ^ decimals_in)
     ) / (
@@ -370,7 +388,8 @@ lows AS (
 ), 
 highs AS (
   select 
-    ticker_id, 
+    ticker_id,
+    asset_ids_concat,
     (
       amount_in /(10 ^ decimals_in)
     ) / (
@@ -385,16 +404,17 @@ SELECT
   p.ticker_id, 
   base_currency, 
   target_currency, 
-  COALESCE(last_price, 0) as last_price, 
-  COALESCE(base_volume, 0) as base_volume, 
-  COALESCE(target_volume, 0) as target_volume, 
+  COALESCE(avg(last_price), 0) as last_price, 
+  sum(COALESCE(base_volume, 0)) as base_volume, 
+  sum(COALESCE(target_volume, 0)) as target_volume, 
   p.ticker_id as pool_id, 
-  COALESCE(liquidity, 0) as liquidity_in_usd, 
-  high, 
-  low 
+  sum(COALESCE(liquidity, 0)) as liquidity_in_usd, 
+  COALESCE(avg(high), 0) as high,
+  COALESCE(avg(low), 0) as low
 FROM 
   pairs p 
-  left join last_trades lt on p.ticker_id = lt.ticker_id 
-  left join highs h on h.ticker_id = lt.ticker_id 
-  left join lows l on l.ticker_id = lt.ticker_id 
-  left join dedup_pair_vol pv on pv.ticker_id = p.ticker_id
+  left join last_trades lt on p.asset_ids_concat = lt.asset_ids_concat 
+  left join highs h on h.asset_ids_concat = lt.asset_ids_concat 
+  left join lows l on l.asset_ids_concat = lt.asset_ids_concat 
+  left join dedup_pair_vol pv on pv.asset_ids_concat = p.asset_ids_concat
+GROUP BY 1,2,3,7
