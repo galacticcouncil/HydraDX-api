@@ -86,6 +86,9 @@ jobs:
       - name: deploy cache_coingecko_tickers_job
         run: gcloud beta run jobs replace .gcp/jobs/cache_coingecko_tickers_job.yml
 
+      - name: deploy cache_coinmarketcap_summary_job
+        run: gcloud beta run jobs replace .gcp/jobs/cache_coinmarketcap_summary_job.yml
+
       - name: deploy cache_hydradx-ui_stats_tvl_job
         run: gcloud beta run jobs replace .gcp/jobs/cache_hydradx-ui_stats_tvl_job.yml
 

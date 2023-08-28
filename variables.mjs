@@ -65,4 +65,8 @@ export const CACHE_SETTINGS = {
     key: "defillama_v1_volume",
     expire_after: 10 * 60,
   },
+  coinmarketcapV1Summary: {
+    key: "coingecko_v1_tickers",
+    expire_after: 12 * 60,
+  },
 };
