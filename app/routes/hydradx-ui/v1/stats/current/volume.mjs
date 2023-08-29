@@ -4,9 +4,12 @@ import { dirname } from "../../../../../../variables.mjs";
 import { CACHE_SETTINGS } from "../../../../../../variables.mjs";
 import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
 
-const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats/current"), {
-  type: "pg",
-});
+const sqlQueries = yesql(
+  path.join(dirname(), "queries/hydradx-ui/v1/stats/current"),
+  {
+    type: "pg",
+  }
+);
 
 export default async (fastify, opts) => {
   fastify.route({
