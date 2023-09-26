@@ -36,14 +36,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const assetIn = request.params.assetIn;
       const assetOut = request.params.assetOut;
-
       const endOfDay = dayjs().endOf("day").format("YYYY-MM-DDTHH:mm:ss");
 
       const sqlQuery = sqlQueries.priceChart({ assetIn, assetOut, endOfDay });
-
-      console.log("DGDGDGD");
-      console.log(endOfDay);
-      console.log(sqlQuery);
 
       let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1TradePriceChart"] };
       cacheSetting.key = cacheSetting.key + "_" + assetIn + "_" + assetOut;
