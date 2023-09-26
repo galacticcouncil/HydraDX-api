@@ -3,7 +3,6 @@ import path from "path";
 import { dirname } from "../../../../../variables.mjs";
 import { CACHE_SETTINGS } from "../../../../../variables.mjs";
 import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
-import { getAssets } from "../../../../../helpers/asset_helpers.mjs";
 
 const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
   type: "pg",
