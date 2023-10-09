@@ -17,7 +17,7 @@ export default async (fastify, opts) => {
     method: ["GET"],
     schema: {
       description: "Current Omnipool TVL.",
-      tags: ["hydradx-ui/v1/"],
+      tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
         properties: {
