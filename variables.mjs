@@ -68,7 +68,7 @@ export const CACHE_SETTINGS = {
   },
   hydradxUiV1StatsCurrentPrice: {
     key: "hydradx-ui_v1_stats_current_price",
-    expire_after: 10 * 60,
+    expire_after: 12,
   },
   defillamaV1Tvl: {
     key: "defillama_v1_tvl",
