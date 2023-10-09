@@ -20,7 +20,7 @@ WITH CombinedQuery AS (
     AND
      CASE
       WHEN :asset::text IS NOT NULL
-        THEN symbol = :asset
+        THEN asset_id = :asset::integer
       ELSE
         true
     END
@@ -37,7 +37,7 @@ WITH CombinedQuery AS (
     AND
      CASE
       WHEN :asset::text IS NOT NULL
-        THEN symbol = :asset
+        THEN asset_id = :asset::integer
       ELSE
         true
     END

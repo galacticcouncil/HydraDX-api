@@ -47,7 +47,7 @@ ordered_data AS (
         src.rn = 1
         AND CASE
             WHEN :asset::text IS NOT NULL
-            THEN symbol = :asset
+            THEN asset_id = :asset::integer
             ELSE
             true
             END

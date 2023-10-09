@@ -17,7 +17,7 @@ FROM
   JOIN token_metadata tm ON oa.asset_id = tm.id
 WHERE CASE
       WHEN :asset::text IS NOT NULL
-        THEN symbol = :asset
+        THEN asset_id = :asset::integer
       ELSE
         true
       END
