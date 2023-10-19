@@ -25,7 +25,7 @@ FROM (
     WHEN :asset::text IS NOT NULL
       THEN symbol = :asset
     ELSE
-      true
+      symbol NOT LIKE '%Pool'
   END
 ) a 
 WHERE 
