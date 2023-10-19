@@ -170,7 +170,7 @@ vol24 AS (
     2, 
     3
 ), 
-lrna_in_dai AS (
+lrna_in_usdt AS (
   SELECT 
     block, 
     balance / 10 ^ decimals / hub_reserve AS lrna_price 
@@ -178,7 +178,7 @@ lrna_in_dai AS (
     alltime_bal a 
     JOIN hub_reserve hr ON a.asset_id = hr.asset_id 
   WHERE 
-    hr.asset_id = '2'
+    hr.asset_id = '10'
 ), 
 spot AS (
   SELECT 
@@ -190,7 +190,7 @@ spot AS (
   FROM 
     vol24 a 
     JOIN hub_reserve hr ON a.asset_id = hr.asset_id 
-    JOIN lrna_in_dai lid ON hr.block = lid.block 
+    JOIN lrna_in_usdt liu ON hr.block = liu.block 
     JOIN alltime_bal ab ON a.asset_id = ab.asset_id
 ), 
 listed AS (
