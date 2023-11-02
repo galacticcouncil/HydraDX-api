@@ -4,7 +4,7 @@
 
 SELECT 
   CASE
-      WHEN :asset::text IS NOT NULL
+      WHEN :asset::integer IS NOT NULL
       THEN 
         SUM(round(volume_roll_24_usd))
       ELSE
@@ -22,7 +22,7 @@ FROM (
     stats_historical
   WHERE
   CASE
-    WHEN :asset::text IS NOT NULL
+    WHEN :asset::integer IS NOT NULL
       THEN symbol = :asset
     ELSE
       true

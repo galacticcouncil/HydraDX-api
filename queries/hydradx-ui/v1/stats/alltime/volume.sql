@@ -4,7 +4,7 @@
 
 SELECT 
   CASE
-    WHEN :asset::text IS NOT NULL THEN 
+    WHEN :asset::integer IS NOT NULL THEN 
       round(SUM(volume_omnipool_roll_24_usd))
     ELSE 
       round(SUM(volume_omnipool_roll_24_usd)/2)
@@ -22,8 +22,8 @@ FROM (
     stats_historical
   WHERE 
   CASE
-      WHEN :asset::text IS NOT NULL
-        THEN asset_id = :asset::integer
+      WHEN :asset::integer IS NOT NULL
+        THEN asset_id = :asset
       ELSE
         true
    END
