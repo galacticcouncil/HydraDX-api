@@ -5,7 +5,7 @@ import { CACHE_SETTINGS } from "../../../../../../variables.mjs";
 import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
 
 const sqlQueries = yesql(
-  path.join(dirname(), "queries/hydradx-ui/v1/stats/current"),
+  path.join(dirname(), "queries/hydradx-ui/v1/stats/alltime"),
   {
     type: "pg",
   }
@@ -13,10 +13,10 @@ const sqlQueries = yesql(
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/tvl/:asset?",
+    url: "/volume/:asset?",
     method: ["GET"],
     schema: {
-      description: "Current Omnipool TVL.",
+      description: "All time trading volume.",
       tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
@@ -34,7 +34,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              tvl_usd: { type: "number" },
+              volume_usd: { type: "number" },
             },
           },
         },
@@ -43,9 +43,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
 
-      const sqlQuery = sqlQueries.statsCurrentTvl({ asset });
+      const sqlQuery = sqlQueries.statsAlltimeVolume({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsCurrentTvl"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1statsAlltimeVolume"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(

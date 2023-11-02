@@ -23,7 +23,7 @@ export default async (fastify, opts) => {
         type: "object",
         properties: {
           asset: {
-            type: "string",
+            type: "integer",
             description: "Asset (id)",
           },
         },

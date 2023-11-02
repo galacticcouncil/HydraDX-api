@@ -1,4 +1,4 @@
--- statsVolume
+-- statsHistoricalVolume
 
 /* 
 :timeframe = hourly
@@ -11,7 +11,12 @@ Returns 30 rows with volume in USD, one daily for last 30d, last record is for y
 WITH CombinedQuery AS (
   SELECT 
     timestamp::date as "timestamp",
-    round(sum(volume_usd)/2) as volume_usd,
+    CASE
+      WHEN :asset::text IS NOT NULL
+        THEN round(sum(volume_usd))
+      ELSE
+        round(sum(volume_usd)/2)
+    END as volume_usd,
     'daily' as type
   FROM 
     stats_historical
@@ -28,7 +33,12 @@ WITH CombinedQuery AS (
   UNION ALL
   SELECT 
     date_trunc('hour', timestamp) as "timestamp",
-    round(sum(volume_usd)/2) as volume_usd,
+    CASE
+      WHEN :asset::text IS NOT NULL
+        THEN round(sum(volume_usd))
+      ELSE
+        round(sum(volume_usd)/2)
+    END as volume_usd,
     'hourly' as type
   FROM 
     stats_historical

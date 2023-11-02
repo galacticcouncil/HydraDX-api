@@ -1,13 +1,16 @@
 import yesql from "yesql";
 import path from "path";
-import { dirname } from "../../../../../variables.mjs";
-import { CACHE_SETTINGS } from "../../../../../variables.mjs";
-import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
-import { getAssets } from "../../../../../helpers/asset_helpers.mjs";
+import { dirname } from "../../../../../../variables.mjs";
+import { CACHE_SETTINGS } from "../../../../../../variables.mjs";
+import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
+import { getAssets } from "../../../../../../helpers/asset_helpers.mjs";
 
-const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
-  type: "pg",
-});
+const sqlQueries = yesql(
+  path.join(dirname(), "queries/hydradx-ui/v1/stats/historical"),
+  {
+    type: "pg",
+  }
+);
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -20,7 +23,7 @@ export default async (fastify, opts) => {
         type: "object",
         properties: {
           asset: {
-            type: "string",
+            type: "integer",
             description: "Asset (id). Leave empty for all assets.",
           },
         },
@@ -42,9 +45,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
 
-      const sqlQuery = sqlQueries.statsTvl({ asset });
+      const sqlQuery = sqlQueries.statsHistoricalTvl({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsTvl"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1statsHistoricalTvl"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(
