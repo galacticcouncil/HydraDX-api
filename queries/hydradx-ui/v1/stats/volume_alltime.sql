@@ -1,4 +1,4 @@
--- statsAlltimeVolume
+-- statsVolumeAlltime
 
 /* Returns all time volume */
 
