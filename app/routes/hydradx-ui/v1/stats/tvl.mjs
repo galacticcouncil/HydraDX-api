@@ -1,22 +1,19 @@
 import yesql from "yesql";
 import path from "path";
-import { dirname } from "../../../../../../variables.mjs";
-import { CACHE_SETTINGS } from "../../../../../../variables.mjs";
-import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
+import { dirname } from "../../../../../variables.mjs";
+import { CACHE_SETTINGS } from "../../../../../variables.mjs";
+import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
 
-const sqlQueries = yesql(
-  path.join(dirname(), "queries/hydradx-ui/v1/stats/current"),
-  {
-    type: "pg",
-  }
-);
+const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
+  type: "pg",
+});
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/volume/:asset?",
+    url: "/tvl/:asset?",
     method: ["GET"],
     schema: {
-      description: "Current 24h rolling trading volume.",
+      description: "Current Omnipool TVL.",
       tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
@@ -34,7 +31,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              volume_usd: { type: "number" },
+              tvl_usd: { type: "number" },
             },
           },
         },
@@ -43,9 +40,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
 
-      const sqlQuery = sqlQueries.statsCurrentVolume({ asset });
+      const sqlQuery = sqlQueries.statsTvl({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsCurrentVolume"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsTvl"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(

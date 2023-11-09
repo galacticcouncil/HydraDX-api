@@ -1,4 +1,4 @@
--- statsCurrentTvl
+-- statsTvl
 
 /* Returns actual TVL */
 

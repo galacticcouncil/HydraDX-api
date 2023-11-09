@@ -1,4 +1,4 @@
--- statsCurrentVolume
+-- statsVolume
 
 /* Returns actual 24h rolling volume */
 

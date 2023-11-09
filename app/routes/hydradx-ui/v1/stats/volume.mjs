@@ -1,30 +1,26 @@
 import yesql from "yesql";
 import path from "path";
-import { dirname } from "../../../../../../variables.mjs";
-import { CACHE_SETTINGS } from "../../../../../../variables.mjs";
-import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
-import { getAssets } from "../../../../../../helpers/asset_helpers.mjs";
+import { dirname } from "../../../../../variables.mjs";
+import { CACHE_SETTINGS } from "../../../../../variables.mjs";
+import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
 
-const sqlQueries = yesql(
-  path.join(dirname(), "queries/hydradx-ui/v1/stats/current"),
-  {
-    type: "pg",
-  }
-);
+const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
+  type: "pg",
+});
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/price/:asset?",
+    url: "/volume/:asset?",
     method: ["GET"],
     schema: {
-      description: "Current asset price in USDT.",
+      description: "Current 24h rolling trading volume.",
       tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
         properties: {
           asset: {
             type: "integer",
-            description: "Asset (id)",
+            description: "Asset (id). Leave empty for all assets.",
           },
         },
       },
@@ -35,7 +31,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              price_usd: { type: "number" },
+              volume_usd: { type: "number" },
             },
           },
         },
@@ -44,9 +40,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
 
-      const sqlQuery = sqlQueries.statsCurrentPrice({ asset });
+      const sqlQuery = sqlQueries.statsVolume({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsCurrentPrice"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsVolume"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(
