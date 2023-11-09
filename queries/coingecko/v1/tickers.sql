@@ -139,7 +139,6 @@ token_data AS (
     balance_changes 
     JOIN block ON block_id = block.id 
     JOIN token_metadata ON asset_id = token_metadata.id :: text
-  WHERE token_metadata.symbol NOT LIKE '%Pool'
 ), 
 alltime_bal AS (
   SELECT 
@@ -199,6 +198,8 @@ listed AS (
     DISTINCT asset_id 
   FROM 
     omnipool_asset
+  WHERE
+    asset_id <> 100
 ), 
 combos AS (
   SELECT 
@@ -249,10 +250,10 @@ omnipool_totals AS (
 ), 
 pair_volumes AS (
   SELECT 
-    asset_in as asset_1, 
-    asset_out as asset_2, 
-    s.symbol as asset_1_symbol, 
-    s2.symbol as asset_2_symbol, 
+    REPLACE(asset_in::text, '100', CASE WHEN asset_out = '10' THEN '21' ELSE '10' END) as asset_1,
+    REPLACE(asset_out::text, '100', CASE WHEN asset_in = '10' THEN '21' ELSE '10' END) as asset_2,
+    REPLACE(s.symbol, '4-Pool', CASE WHEN s2.symbol = 'USDT' THEN 'USDC' ELSE 'USDT' END) as asset_1_symbol,
+    REPLACE(s2.symbol, '4-Pool', CASE WHEN s.symbol = 'USDT' THEN 'USDC' ELSE 'USDT' END) as asset_2_symbol,
     s.price as asset_1_price, 
     s2.price as asset_2_price, 
     amount_in / (10 ^ s.decimals) AS base_volume, 
@@ -400,15 +401,15 @@ highs AS (
     highs_lows 
   where 
     rank_high = 1
-) 
+)
 SELECT 
-  p.ticker_id, 
-  base_currency, 
-  target_currency, 
+  p.ticker_id,
+  base_currency,
+  target_currency,
   COALESCE(avg(last_price), 0) as last_price, 
   sum(COALESCE(base_volume, 0)) as base_volume, 
   sum(COALESCE(target_volume, 0)) as target_volume, 
-  p.ticker_id as pool_id, 
+  p.ticker_id as pool_id,
   sum(COALESCE(liquidity, 0)) as liquidity_in_usd, 
   COALESCE(avg(high), 0) as high,
   COALESCE(avg(low), 0) as low
