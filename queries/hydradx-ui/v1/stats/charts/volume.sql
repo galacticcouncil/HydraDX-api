@@ -1,4 +1,4 @@
--- statsHistoricalVolume
+-- statsChartVolume
 
 /* 
 :timeframe = hourly

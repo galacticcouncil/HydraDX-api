@@ -1,4 +1,4 @@
--- statsHistoricalTvl
+-- statsChartTvl
 
 /* Returns 60 rows with all time TVL in USD */
 

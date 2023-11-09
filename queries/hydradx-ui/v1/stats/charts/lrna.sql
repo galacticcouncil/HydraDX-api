@@ -1,4 +1,4 @@
--- statsLrna
+-- statsChartLrna
 
 /* Returns 60 rows with all time historical LRNA price in USD */
 

@@ -6,7 +6,7 @@ import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
 import { getAssets } from "../../../../../../helpers/asset_helpers.mjs";
 
 const sqlQueries = yesql(
-  path.join(dirname(), "queries/hydradx-ui/v1/stats/historical"),
+  path.join(dirname(), "queries/hydradx-ui/v1/stats/charts"),
   {
     type: "pg",
   }
@@ -17,7 +17,7 @@ export default async (fastify, opts) => {
     url: "/lrna",
     method: ["GET"],
     schema: {
-      description: "LRNA price & supply for the HydraDX stats page.",
+      description: "Chart data for LRNA price & supply.",
       tags: ["hydradx-ui/v1"],
       response: {
         200: {
@@ -37,9 +37,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
 
-      const sqlQuery = sqlQueries.statsLrna();
+      const sqlQuery = sqlQueries.statsChartLrna();
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsLrna"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsChartLrna"] };
 
       const result = await cachedFetch(
         fastify.pg,

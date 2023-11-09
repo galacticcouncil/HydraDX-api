@@ -6,7 +6,7 @@ import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
 import { getAssets } from "../../../../../../helpers/asset_helpers.mjs";
 
 const sqlQueries = yesql(
-  path.join(dirname(), "queries/hydradx-ui/v1/stats/historical"),
+  path.join(dirname(), "queries/hydradx-ui/v1/stats/charts"),
   {
     type: "pg",
   }
@@ -17,7 +17,7 @@ export default async (fastify, opts) => {
     url: "/tvl/:asset?",
     method: ["GET"],
     schema: {
-      description: "Omnipool TVL for the HydraDX stats page.",
+      description: "Chart data for Omnipool TVL.",
       tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
@@ -45,9 +45,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
 
-      const sqlQuery = sqlQueries.statsHistoricalTvl({ asset });
+      const sqlQuery = sqlQueries.statsChartTvl({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1statsHistoricalTvl"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1statsChartTvl"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(

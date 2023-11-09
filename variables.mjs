@@ -54,8 +54,16 @@ export const CACHE_SETTINGS = {
     key: "hydradx-ui_v1_stats_volume",
     expire_after: 60,
   },
-  hydradxUiV1StatsLrna: {
-    key: "hydradx-ui_v1_stats_lrna",
+  hydradxUiV1StatsChartLrna: {
+    key: "hydradx-ui_v1_stats_chart_lrna",
+    expire_after: 10 * 60,
+  },
+  hydradxUiV1statsChartTvl: {
+    key: "hydradx-ui_v1_stats_chart_tvl",
+    expire_after: 10 * 60,
+  },
+  hydradxUiV1statsChartVolume: {
+    key: "hydradx-ui_v1_stats_chart_volume",
     expire_after: 10 * 60,
   },
   hydradxUiV1StatsCurrentTvl: {
