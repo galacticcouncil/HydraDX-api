@@ -22,7 +22,7 @@ FROM (
     stats_historical
   WHERE
   CASE
-    WHEN :asset::integer IS NOT NULL
+    WHEN :asset::text IS NOT NULL
       THEN symbol = :asset
     ELSE
       true
