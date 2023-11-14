@@ -1,26 +1,27 @@
 import yesql from "yesql";
 import path from "path";
-import { dirname } from "../../../../variables.mjs";
-import { CACHE_SETTINGS } from "../../../../variables.mjs";
-import { cachedFetch } from "../../../../helpers/cache_helpers.mjs";
+import { dirname } from "../../../../../variables.mjs";
+import { CACHE_SETTINGS } from "../../../../../variables.mjs";
+import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
+import { getAssets } from "../../../../../helpers/asset_helpers.mjs";
 
-const sqlQueries = yesql(path.join(dirname(), "queries/defillama/v1/"), {
+const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
   type: "pg",
 });
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/tvl/:asset?",
+    url: "/price/:asset?",
     method: ["GET"],
     schema: {
-      description: "Current Omnipool TVL for DefiLlama.",
-      tags: ["defillama/v1"],
+      description: "Current asset price in USDT.",
+      tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
         properties: {
           asset: {
-            type: "string",
-            description: "Asset (symbol). Leave empty for all assets.",
+            type: "integer",
+            description: "Asset (id)",
           },
         },
       },
@@ -31,7 +32,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              tvl_usd: { type: "number" },
+              price_usd: { type: "number" },
             },
           },
         },
@@ -40,9 +41,9 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
 
-      const sqlQuery = sqlQueries.defillamaTvl({ asset });
+      const sqlQuery = sqlQueries.statsPrice({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["defillamaV1Tvl"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsPrice"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(

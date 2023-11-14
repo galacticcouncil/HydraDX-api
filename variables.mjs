@@ -50,33 +50,37 @@ export const CACHE_SETTINGS = {
     key: "hydradx-ui_v1_stats_tvl",
     expire_after: 60 * 60,
   },
+  hydradxUiV1StatsChartLrna: {
+    key: "hydradx-ui_v1_stats_chart_lrna",
+    expire_after: 10 * 60,
+  },
+  hydradxUiV1statsChartTvl: {
+    key: "hydradx-ui_v1_stats_chart_tvl",
+    expire_after: 10 * 60,
+  },
+  hydradxUiV1statsChartVolume: {
+    key: "hydradx-ui_v1_stats_chart_volume",
+    expire_after: 10 * 60,
+  },
+  hydradxUiV1StatsTvl: {
+    key: "hydradx-ui_v1_stats_tvl",
+    expire_after: 10 * 60,
+  },
   hydradxUiV1StatsVolume: {
     key: "hydradx-ui_v1_stats_volume",
-    expire_after: 10 * 60,
+    expire_after: 60,
   },
   hydradxUiV1StatsFees: {
     key: "hydradx-ui_v1_stats_fees",
     expire_after: 10 * 60,
   },
-  hydradxUiV1StatsLrna: {
-    key: "hydradx-ui_v1_stats_lrna",
-    expire_after: 10 * 60,
-  },
-  hydradxUiV1StatsCurrentTvl: {
-    key: "hydradx-ui_v1_stats_tvl_current",
-    expire_after: 10 * 60,
-  },
-  hydradxUiV1StatsCurrentVolume: {
-    key: "hydradx-ui_v1_stats_current_volume",
-    expire_after: 10 * 60,
-  },
-  hydradxUiV1StatsCurrentPrice: {
-    key: "hydradx-ui_v1_stats_current_price",
+  hydradxUiV1statsVolumeAlltime: {
+    key: "hydradx-ui_v1_stats_volume_alltime",
     expire_after: 60,
   },
-  defillamaV1Tvl: {
-    key: "defillama_v1_tvl",
-    expire_after: 10 * 60,
+  hydradxUiV1StatsPrice: {
+    key: "hydradx-ui_v1_stats_current_price",
+    expire_after: 60,
   },
   defillamaV1Volume: {
     key: "defillama_v1_volume",

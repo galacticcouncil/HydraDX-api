@@ -3,28 +3,39 @@ import path from "path";
 import { dirname } from "../../../../../../variables.mjs";
 import { CACHE_SETTINGS } from "../../../../../../variables.mjs";
 import { cachedFetch } from "../../../../../../helpers/cache_helpers.mjs";
-import { getAssets } from "../../../../../../helpers/asset_helpers.mjs";
 
 const sqlQueries = yesql(
-  path.join(dirname(), "queries/hydradx-ui/v1/stats/current"),
+  path.join(dirname(), "queries/hydradx-ui/v1/stats/charts"),
   {
     type: "pg",
   }
 );
 
+export const VALID_TIMEFRAMES = ["hourly", "daily"];
+
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/price/:asset?",
+    url: "/volume/:asset?",
     method: ["GET"],
     schema: {
-      description: "Current asset price in USDT.",
+      description: "Chart data for Omnipool trading volume.",
       tags: ["hydradx-ui/v1"],
       params: {
         type: "object",
         properties: {
           asset: {
+            type: "integer",
+            description: "Asset (id). Leave empty for all assets.",
+          },
+        },
+      },
+      querystring: {
+        type: "object",
+        properties: {
+          timeframe: {
             type: "string",
-            description: "Asset (id)",
+            enum: VALID_TIMEFRAMES,
+            default: "daily",
           },
         },
       },
@@ -35,7 +46,8 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              price_usd: { type: "number" },
+              timestamp: { type: "string" },
+              volume_usd: { type: "number" },
             },
           },
         },
@@ -43,11 +55,14 @@ export default async (fastify, opts) => {
     },
     handler: async (request, reply) => {
       const asset = request.params.asset ? request.params.asset : null;
+      const timeframe = request.query.timeframe;
 
-      const sqlQuery = sqlQueries.statsCurrentPrice({ asset });
+      const sqlQuery = sqlQueries.statsChartVolume({ asset, timeframe });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsCurrentPrice"] };
-      cacheSetting.key = cacheSetting.key + "_" + asset;
+      let cacheSetting = {
+        ...CACHE_SETTINGS["hydradxUiV1statsChartVolume"],
+      };
+      cacheSetting.key = cacheSetting.key + "_" + asset + "_" + timeframe;
 
       const result = await cachedFetch(
         fastify.pg,
