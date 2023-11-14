@@ -8,7 +8,7 @@ const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
   type: "pg",
 });
 
-export const VALID_TIMEFRAMES = ["day", "week", "month", "year"];
+export const VALID_TIMEFRAMES = ["1d", "1w", "1mon", "1y"];
 
 export default async (fastify, opts) => {
   fastify.route({

@@ -4,17 +4,7 @@
 based on past :timeframe = 1d, 1w, 1mon, 1y
 */
 
-WITH interval_prep AS (
-    SELECT 
-        CASE 
-            WHEN :timeframe = 'day' THEN '1 day'::interval
-            WHEN :timeframe = 'week' THEN '1 week'::interval
-            WHEN :timeframe = 'month' THEN '1 month'::interval
-            WHEN :timeframe = 'year' THEN '1 year'::interval
-            ELSE '1 month'::interval -- Default case
-        END AS interval
-),
-fees AS (
+WITH fees AS (
     SELECT 
         COALESCE(q1.asset_id, q2.asset_id) AS asset_id,
         COALESCE(q1.amount, 0) + COALESCE(q2.amount, 0) AS amount
@@ -24,7 +14,7 @@ fees AS (
              SUM(CAST(args ->> 'assetFeeAmount' AS numeric)) AS amount 
          FROM event e 
          JOIN block b ON e.block_id = b.id
-         WHERE timestamp > NOW() - (SELECT interval FROM interval_prep)
+         WHERE timestamp > NOW() - :timeframe::interval 
          AND name = 'Omnipool.SellExecuted'
          AND
             CASE
@@ -40,7 +30,7 @@ fees AS (
              SUM(CAST(args ->> 'assetFeeAmount' AS numeric)) AS amount 
          FROM event e 
          JOIN block b ON e.block_id = b.id
-         WHERE timestamp > NOW() - (SELECT interval FROM interval_prep)
+         WHERE timestamp > NOW() - :timeframe::interval 
          AND name = 'Omnipool.BuyExecuted'
          AND
             CASE
@@ -99,10 +89,10 @@ FROM
     JOIN tvl ON tm.id = tvl.asset_id
     CROSS JOIN (SELECT 
                     CASE 
-                        WHEN :timeframe = 'day' THEN 365
-                        WHEN :timeframe = 'week' THEN 52
-                        WHEN :timeframe = 'month' THEN 12
-                        WHEN :timeframe = 'year' THEN 1
+                        WHEN :timeframe = '1d' THEN 365
+                        WHEN :timeframe = '1w' THEN 52
+                        WHEN :timeframe = '1mon' THEN 12
+                        WHEN :timeframe = '1y' THEN 1
                         ELSE 12 -- default to monthly if timeframe not recognized
                     END AS parts
                 ) AS interval_calc
