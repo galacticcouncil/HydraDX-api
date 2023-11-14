@@ -1,4 +1,4 @@
--- statsCurrentPrice
+-- statsPrice
 
 /* Returns current asset price */
 
