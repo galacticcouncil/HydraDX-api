@@ -4,7 +4,7 @@
 
 SELECT 
   CASE
-      WHEN :asset::integer IS NOT NULL
+      WHEN :asset::text IS NOT NULL
       THEN 
         SUM(round(volume_roll_24_usd))
       ELSE
