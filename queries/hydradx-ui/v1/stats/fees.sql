@@ -18,7 +18,7 @@ WITH fees AS (
          AND name = 'Omnipool.SellExecuted'
          AND
             CASE
-            WHEN :asset::integer IS NOT NULL
+            WHEN :asset::text IS NOT NULL
                 THEN CAST(args ->> 'assetOut' AS numeric) = :asset
             ELSE
                 true
@@ -34,7 +34,7 @@ WITH fees AS (
          AND name = 'Omnipool.BuyExecuted'
          AND
             CASE
-            WHEN :asset::integer IS NOT NULL
+            WHEN :asset::text IS NOT NULL
                 THEN CAST(args ->> 'assetIn' AS numeric) = :asset
             ELSE
                 true

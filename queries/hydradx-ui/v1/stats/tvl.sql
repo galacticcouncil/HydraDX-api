@@ -16,7 +16,7 @@ FROM
   JOIN omnipool_asset oa ON leb.height = oa.block
   JOIN token_metadata tm ON oa.asset_id = tm.id
 WHERE CASE
-      WHEN :asset::integer IS NOT NULL
+      WHEN :asset::text IS NOT NULL
         THEN asset_id = :asset
       ELSE
         true

@@ -21,7 +21,7 @@ export default async (fastify, opts) => {
         type: "object",
         properties: {
           asset: {
-            type: "integer",
+            type: "string",
             description: "Asset (id). Leave empty for all assets.",
           },
         },

@@ -46,7 +46,7 @@ ordered_data AS (
     WHERE 
         src.rn = 1
         AND CASE
-            WHEN :asset::integer IS NOT NULL
+            WHEN :asset::text IS NOT NULL
             THEN asset_id = :asset
             ELSE
             true
