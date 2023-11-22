@@ -38,7 +38,7 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const asset = request.params.asset ? request.params.asset : null;
+      const asset = request.params.asset ? request.params.asset.toString() : null;
 
       const sqlQuery = sqlQueries.statsTvl({ asset });
 
