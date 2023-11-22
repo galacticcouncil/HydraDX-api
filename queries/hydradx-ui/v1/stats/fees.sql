@@ -18,7 +18,7 @@ WITH fees AS (
          AND name = 'Omnipool.SellExecuted'
          AND
             CASE
-            WHEN :asset::integer IS NOT NULL
+            WHEN :asset::text IS NOT NULL
                 THEN CAST(args ->> 'assetOut' AS numeric) = :asset
             ELSE
                 true
@@ -34,7 +34,7 @@ WITH fees AS (
          AND name = 'Omnipool.BuyExecuted'
          AND
             CASE
-            WHEN :asset::integer IS NOT NULL
+            WHEN :asset::text IS NOT NULL
                 THEN CAST(args ->> 'assetIn' AS numeric) = :asset
             ELSE
                 true
@@ -81,7 +81,7 @@ tvl AS (
 )
 SELECT 
     round(sum((amount / 10^decimals) * price_usd)::numeric, 2) AS accrued_fees_usd,
-    round(avg((POWER(1 + (COALESCE(ROUND((amount / 10^decimals) * price_usd), 0) * parts) / asset_tvl, parts) - 1)::numeric), 4) AS projected_apy_perc
+    round(avg((POWER(1 + COALESCE((amount / 10^decimals) * price_usd, 0) / asset_tvl, parts) - 1)::numeric), 4) * 100 AS projected_apy_perc
 FROM 
     fees
     JOIN token_metadata tm ON asset_id = tm.id

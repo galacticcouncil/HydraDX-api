@@ -12,7 +12,7 @@ WITH CombinedQuery AS (
   SELECT 
     timestamp::date as "timestamp",
     CASE
-      WHEN :asset::integer IS NOT NULL
+      WHEN :asset::text IS NOT NULL
         THEN round(sum(volume_usd))
       ELSE
         round(sum(volume_usd)/2)
@@ -24,7 +24,7 @@ WITH CombinedQuery AS (
     timestamp between now() - interval '30d' and (current_date::timestamp) - interval '1 microsecond'
     AND
      CASE
-      WHEN :asset::integer IS NOT NULL
+      WHEN :asset::text IS NOT NULL
         THEN asset_id = :asset
       ELSE
         true
@@ -34,7 +34,7 @@ WITH CombinedQuery AS (
   SELECT 
     date_trunc('hour', timestamp) as "timestamp",
     CASE
-      WHEN :asset::integer IS NOT NULL
+      WHEN :asset::text IS NOT NULL
         THEN round(sum(volume_usd))
       ELSE
         round(sum(volume_usd)/2)
@@ -46,7 +46,7 @@ WITH CombinedQuery AS (
     timestamp between now() - interval '24h' and date_trunc('hour', now()) - interval '1 microsecond'
     AND
      CASE
-      WHEN :asset::integer IS NOT NULL
+      WHEN :asset::text IS NOT NULL
         THEN asset_id = :asset
       ELSE
         true
