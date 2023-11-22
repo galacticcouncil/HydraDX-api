@@ -20,7 +20,7 @@ export default async (fastify, opts) => {
         type: "object",
         properties: {
           asset: {
-            type: "string",
+            type: "integer",
             description: "Asset (id)",
           },
         },
@@ -39,7 +39,10 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const asset = request.params.asset ? request.params.asset.toString() : null;
+      const asset =
+        request.params.asset !== undefined && request.params.asset !== null
+          ? request.params.asset.toString()
+          : null;
 
       const sqlQuery = sqlQueries.statsPrice({ asset });
 
