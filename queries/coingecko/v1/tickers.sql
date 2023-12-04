@@ -401,6 +401,76 @@ highs AS (
     highs_lows 
   where 
     rank_high = 1
+),
+xyk AS (
+    SELECT DISTINCT
+        block_id,
+        extrinsic_id,
+        phase,
+        args ->> 'assetIn' AS asset_in,
+        args ->> 'assetOut' AS asset_out,
+        CAST(args ->> 'buyPrice' AS numeric) AS amount_in,
+        CAST(args ->> 'amount' AS numeric) AS amount_out
+    FROM event e
+    WHERE name = 'XYK.BuyExecuted'
+
+    UNION ALL
+
+    SELECT DISTINCT
+        block_id,
+        extrinsic_id,
+        phase,
+        args ->> 'assetOut' AS asset_in,
+        args ->> 'assetIn' AS asset_out,
+        CAST(args ->> 'salePrice' AS numeric) AS amount_in,
+        CAST(args ->> 'amount' AS numeric) AS amount_out
+    FROM event e
+    WHERE name = 'XYK.SellExecuted'
+),
+xyk_ranking AS (
+    SELECT
+        block_id,
+        extrinsic_id,
+        phase,
+        timestamp,
+        ROW_NUMBER() OVER (ORDER BY timestamp DESC) as rn,
+        CASE 
+            WHEN asset_in > asset_out THEN asset_in 
+            ELSE asset_out 
+        END as asset_in,
+        CASE 
+            WHEN asset_in > asset_out THEN asset_out 
+            ELSE asset_in 
+        END as asset_out,
+        CASE 
+            WHEN asset_in > asset_out THEN amount_in 
+            ELSE amount_out 
+        END as amount_in,
+        CASE 
+            WHEN asset_in > asset_out THEN amount_out 
+            ELSE amount_in 
+        END as amount_out
+    FROM xyk
+    JOIN block ON xyk.block_id = block.id
+    WHERE timestamp > now() - interval '1 day'
+),
+xyk_pools AS (
+  SELECT 
+      CONCAT(tm.symbol, '_', tme.symbol) as ticker_id,
+      tm.symbol as base_currency,
+      tme.symbol as target_currency,
+      amount_in / amount_out as last_price, 
+      SUM(amount_in / 10^tm.decimals) OVER (PARTITION BY asset_in) as base_volume,
+      SUM(amount_out / 10^tme.decimals) OVER (PARTITION BY asset_out) as target_volume, 
+      CONCAT(tm.symbol, '_', tme.symbol) as pool_id,
+      0 as liquidity_in_usd, 
+      MAX(amount_in / amount_out) OVER (PARTITION BY asset_in) as high,
+      MIN(amount_in / amount_out) OVER (PARTITION BY asset_in) as low,
+      rn
+  FROM xyk_ranking xr
+  JOIN token_metadata tm ON xr.asset_in = tm.id::text
+  JOIN token_metadata tme ON xr.asset_out = tme.id::text
+  ORDER BY timestamp DESC
 )
 SELECT 
   p.ticker_id,
@@ -420,3 +490,19 @@ FROM
   left join lows l on l.asset_ids_concat = lt.asset_ids_concat 
   left join dedup_pair_vol pv on pv.asset_ids_concat = p.asset_ids_concat
 GROUP BY 1,2,3,7
+
+UNION ALL
+
+SELECT
+  ticker_id,
+  base_currency,
+  target_currency,
+  last_price,
+  base_volume,
+  target_volume,
+  pool_id,
+  liquidity_in_usd,
+  high,
+  low
+FROM xyk_pools
+WHERE rn = 1
