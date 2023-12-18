@@ -3,6 +3,7 @@
 /* Returns actual TVL */
 
 SELECT 
+  asset_id,
   round(sum(oa.hub_reserve/10^12 * leb.last_lrna_price)) as tvl_usd
 FROM 
   lrna_every_block leb
@@ -21,3 +22,4 @@ WHERE CASE
       ELSE
         true
       END
+GROUP BY 1

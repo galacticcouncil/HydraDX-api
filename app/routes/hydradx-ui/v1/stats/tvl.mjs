@@ -31,6 +31,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
+              asset_id: { type: "integer" },
               tvl_usd: { type: "number" },
             },
           },
