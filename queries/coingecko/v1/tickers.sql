@@ -469,7 +469,7 @@ xyk_pools AS (
   FROM xyk_ranking xr
   JOIN token_metadata tm ON xr.asset_in = tm.id::text
   JOIN token_metadata tme ON xr.asset_out = tme.id::text
-  WHERE tm.id < 100 AND tme.id < 100
+  WHERE tm.id < 100 AND tme.id < 100 -- filter out unreportable assets
   ORDER BY timestamp DESC
 )
 SELECT 
