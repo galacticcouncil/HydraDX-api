@@ -433,7 +433,6 @@ xyk_ranking AS (
         extrinsic_id,
         phase,
         timestamp,
-        ROW_NUMBER() OVER (ORDER BY timestamp DESC) as rn,
         CASE 
             WHEN asset_in > asset_out THEN asset_in 
             ELSE asset_out 
@@ -466,10 +465,11 @@ xyk_pools AS (
       0 as liquidity_in_usd, 
       MAX(amount_in / amount_out) OVER (PARTITION BY asset_in) as high,
       MIN(amount_in / amount_out) OVER (PARTITION BY asset_in) as low,
-      rn
+      ROW_NUMBER() OVER (PARTITION BY tm.id, tme.id ORDER BY timestamp DESC) as rn
   FROM xyk_ranking xr
   JOIN token_metadata tm ON xr.asset_in = tm.id::text
   JOIN token_metadata tme ON xr.asset_out = tme.id::text
+  WHERE tm.id < 100 AND tme.id < 100
   ORDER BY timestamp DESC
 )
 SELECT 
