@@ -45,6 +45,7 @@ export default async (fastify, opts) => {
             properties: {
               accrued_fees_usd: { type: "number" },
               projected_apy_perc: { type: "number" },
+              projected_apr_perc: { type: "number" },
             },
           },
         },
