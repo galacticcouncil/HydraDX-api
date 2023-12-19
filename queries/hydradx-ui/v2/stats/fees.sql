@@ -80,6 +80,7 @@ tvl AS (
     GROUP BY 1
 )
 SELECT 
+    tm.id as asset_id,
     round(sum((amount / 10^decimals) * price_usd)::numeric, 2) AS accrued_fees_usd,
     round(avg((POWER(1 + COALESCE((amount / 10^decimals) * price_usd, 0) / asset_tvl, parts) - 1)::numeric), 4) * 100 AS projected_apy_perc,
     round(avg(COALESCE((amount / 10^decimals) * price_usd, 0) / asset_tvl * parts)::numeric, 4) * 100 AS projected_apr_perc
@@ -97,3 +98,4 @@ FROM
                         ELSE 12 -- default to monthly if timeframe not recognized
                     END AS parts
                 ) AS interval_calc
+GROUP BY 1

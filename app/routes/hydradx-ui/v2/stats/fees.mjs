@@ -4,23 +4,35 @@ import { dirname } from "../../../../../variables.mjs";
 import { CACHE_SETTINGS } from "../../../../../variables.mjs";
 import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
 
-const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
+const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v2/stats"), {
   type: "pg",
 });
 
+export const VALID_TIMEFRAMES = ["1d", "1w", "1mon", "1y"];
+
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/tvl/:asset?",
+    url: "/fees/:asset?",
     method: ["GET"],
     schema: {
-      description: "Current Omnipool TVL.",
-      tags: ["hydradx-ui/v1"],
+      description: "Omnipool trading fees for the HydraDX stats page.",
+      tags: ["hydradx-ui/v2"],
       params: {
         type: "object",
         properties: {
           asset: {
             type: "integer",
             description: "Asset (id). Leave empty for all assets.",
+          },
+        },
+      },
+      querystring: {
+        type: "object",
+        properties: {
+          timeframe: {
+            type: "string",
+            enum: VALID_TIMEFRAMES,
+            default: "1mon",
           },
         },
       },
@@ -31,7 +43,10 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              tvl_usd: { type: "number" },
+              asset_id: { type: "integer" },
+              accrued_fees_usd: { type: "number" },
+              projected_apy_perc: { type: "number" },
+              projected_apr_perc: { type: "number" },
             },
           },
         },
@@ -42,11 +57,12 @@ export default async (fastify, opts) => {
         request.params.asset !== undefined && request.params.asset !== null
           ? request.params.asset.toString()
           : null;
+      const timeframe = request.query.timeframe;
 
-      const sqlQuery = sqlQueries.statsTvl({ asset });
+      const sqlQuery = sqlQueries.statsFees({ asset, timeframe });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsTvl"] };
-      cacheSetting.key = cacheSetting.key + "_" + asset;
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV2StatsFees"] };
+      cacheSetting.key = cacheSetting.key + "_" + asset + "_" + timeframe;
 
       const result = await cachedFetch(
         fastify.pg,

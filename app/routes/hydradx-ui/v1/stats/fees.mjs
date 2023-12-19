@@ -43,7 +43,6 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              asset_id: { type: "integer" },
               accrued_fees_usd: { type: "number" },
               projected_apy_perc: { type: "number" },
               projected_apr_perc: { type: "number" },

@@ -4,7 +4,7 @@ import { dirname } from "../../../../../variables.mjs";
 import { CACHE_SETTINGS } from "../../../../../variables.mjs";
 import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
 
-const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
+const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v2/stats"), {
   type: "pg",
 });
 
@@ -14,7 +14,7 @@ export default async (fastify, opts) => {
     method: ["GET"],
     schema: {
       description: "Current 24h rolling trading volume.",
-      tags: ["hydradx-ui/v1"],
+      tags: ["hydradx-ui/v2"],
       params: {
         type: "object",
         properties: {
@@ -31,6 +31,7 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
+              asset_id: { type: "integer" },
               volume_usd: { type: "number" },
             },
           },
@@ -45,7 +46,7 @@ export default async (fastify, opts) => {
 
       const sqlQuery = sqlQueries.statsVolume({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsVolume"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV2StatsVolume"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(
@@ -64,7 +65,7 @@ export default async (fastify, opts) => {
     method: ["GET"],
     schema: {
       description: "All time trading volume.",
-      tags: ["hydradx-ui/v1"],
+      tags: ["hydradx-ui/v2"],
       params: {
         type: "object",
         properties: {
@@ -95,7 +96,7 @@ export default async (fastify, opts) => {
 
       const sqlQuery = sqlQueries.statsVolumeAlltime({ asset });
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1statsVolumeAlltime"] };
+      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV2statsVolumeAlltime"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
 
       const result = await cachedFetch(
