@@ -90,4 +90,20 @@ export const CACHE_SETTINGS = {
     key: "coinmarketcap_v1_summary",
     expire_after: 12 * 60,
   },
+  hydradxUiV2StatsFees: {
+    key: "hydradx-ui_v2_stats_fees",
+    expire_after: 10 * 60,
+  },
+  hydradxUiV2StatsTvl: {
+    key: "hydradx-ui_v2_stats_tvl",
+    expire_after: 60,
+  },
+  hydradxUiV2StatsVolume: {
+    key: "hydradx-ui_v2_stats_volume",
+    expire_after: 60,
+  },
+  hydradxUiV2statsVolumeAlltime: {
+    key: "hydradx-ui_v2_stats_volume_alltime",
+    expire_after: 60,
+  },
 };
