@@ -25,8 +25,12 @@ WITH fees AS (
             END
          GROUP BY 1) AS q1
     FULL OUTER JOIN 
+        -- the following query has to consider change of fee asset on buy at block 4221778
         (SELECT 
-             CAST(args ->> 'assetIn' AS numeric) AS asset_id, 
+             CASE 
+                WHEN height < 4221778 THEN CAST(args ->> 'assetIn' AS numeric)
+                ELSE CAST(args ->> 'assetOut' AS numeric) 
+             END AS asset_id, 
              SUM(CAST(args ->> 'assetFeeAmount' AS numeric)) AS amount 
          FROM event e 
          JOIN block b ON e.block_id = b.id
@@ -34,10 +38,13 @@ WITH fees AS (
          AND name = 'Omnipool.BuyExecuted'
          AND
             CASE
-            WHEN :asset::text IS NOT NULL
-                THEN CAST(args ->> 'assetIn' AS numeric) = :asset
-            ELSE
-                true
+                WHEN :asset::text IS NOT NULL THEN
+                    CASE 
+                        WHEN height < 4221778 THEN CAST(args ->> 'assetIn' AS numeric)
+                        ELSE CAST(args ->> 'assetOut' AS numeric) 
+                    END = :asset
+                ELSE
+                    true
             END
          GROUP BY 1) AS q2
     ON q1.asset_id = q2.asset_id
@@ -82,8 +89,8 @@ tvl AS (
 SELECT 
     tm.id as asset_id,
     round(sum((amount / 10^decimals) * price_usd)::numeric, 2) AS accrued_fees_usd,
-    round(avg((POWER(1 + COALESCE((amount / 10^decimals) * price_usd, 0) / asset_tvl, parts) - 1)::numeric), 4) * 100 AS projected_apy_perc,
-    round(avg(COALESCE((amount / 10^decimals) * price_usd, 0) / asset_tvl * parts)::numeric, 4) * 100 AS projected_apr_perc
+    round(avg((POWER(1 + COALESCE((amount / 10^decimals) * price_usd, 0) / asset_tvl, parts) - 1)::numeric), 4) * 100 / 2 AS projected_apy_perc,
+    round(avg(COALESCE((amount / 10^decimals) * price_usd, 0) / asset_tvl * parts)::numeric, 4) * 100 / 2 AS projected_apr_perc
 FROM 
     fees
     JOIN token_metadata tm ON asset_id = tm.id
