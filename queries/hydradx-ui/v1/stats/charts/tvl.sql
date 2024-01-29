@@ -51,15 +51,35 @@ ordered_data AS (
             ELSE
             true
             END
-    GROUP BY 
+    GROUP BY
         s.start
+),
+actual_tvl as (
+    SELECT round(sum(oa.hub_reserve / 10 ^ 12 * leb.last_lrna_price)) as tvl_usd,
+           MAX(timestamp) as timestamp
+    FROM lrna_every_block leb
+            JOIN (SELECT LEAST(max_leb.max_height, max_oa.max_block) AS joined_height
+                  FROM (SELECT MAX(height) as max_height FROM lrna_every_block) max_leb,
+                       (SELECT MAX(block) as max_block FROM omnipool_asset) max_oa) subq
+                 ON leb.height = subq.joined_height
+            JOIN omnipool_asset oa ON leb.height = oa.block
+            JOIN token_metadata tm ON oa.asset_id = tm.id
+    WHERE CASE
+             WHEN :asset::text IS NOT NULL
+                 THEN asset_id = :asset
+             ELSE
+                 true
+             END
 )
 SELECT 
     CASE 
-        WHEN desc_rn = 1 THEN TO_CHAR(now()::timestamp, 'YYYY-MM-DD HH24:MI:SS')
+        WHEN desc_rn = 1 THEN TO_CHAR((SELECT timestamp FROM actual_tvl), 'YYYY-MM-DD HH24:MI:SS')
         ELSE TO_CHAR("timestamp", 'YYYY-MM-DD HH24:MI:SS')
     END AS "timestamp",
-    tvl_usd
+    CASE
+        WHEN desc_rn = 1 THEN (SELECT tvl_usd FROM actual_tvl)
+        ELSE tvl_usd
+    END
 FROM 
     ordered_data
 ORDER BY 
