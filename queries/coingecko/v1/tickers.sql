@@ -178,7 +178,7 @@ lrna_in_usdt AS (
     alltime_bal a 
     JOIN hub_reserve hr ON a.asset_id = hr.asset_id 
   WHERE 
-    hr.asset_id = '10'
+    hr.asset_id = '102'
 ), 
 spot AS (
   SELECT 
