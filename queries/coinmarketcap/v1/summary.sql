@@ -249,21 +249,25 @@ omnipool_totals AS (
     2
 ),
 pair_volumes AS (
-  SELECT
+  SELECT 
     CASE WHEN asset_in = 100 THEN REPLACE(asset_in::text, '100', CASE WHEN asset_out = '10' THEN '21' ELSE '10' END)
          WHEN asset_in = 101 THEN REPLACE(asset_in::text, '101', CASE WHEN asset_out = '11' THEN '19' ELSE '11' END)
+         WHEN asset_in = 102 THEN REPLACE(asset_in::text, '102', CASE WHEN asset_out = '10' THEN '22' ELSE '10' END)
          ELSE asset_in::text
     END as asset_1,
     CASE WHEN asset_out = 100 THEN REPLACE(asset_out::text, '100', CASE WHEN asset_in = '10' THEN '21' ELSE '10' END)
          WHEN asset_out = 101 THEN REPLACE(asset_out::text, '101', CASE WHEN asset_in = '11' THEN '19' ELSE '11' END)
+         WHEN asset_out = 102 THEN REPLACE(asset_out::text, '102', CASE WHEN asset_in = '10' THEN '22' ELSE '10' END)
          ELSE asset_out::text
     END as asset_2,
     CASE WHEN asset_in = 100 THEN REPLACE(s.symbol, '4-Pool', CASE WHEN s2.symbol = 'USDT' THEN 'USDC' ELSE 'USDT' END)
          WHEN asset_in = 101 THEN REPLACE(s.symbol, '2-Pool', CASE WHEN s2.symbol = 'iBTC' THEN 'WBTC' ELSE 'iBTC' END)
+         WHEN asset_in = 102 THEN REPLACE(s.symbol, '2-Pool-Stbl', CASE WHEN s2.symbol = 'USDT' THEN 'USDC' ELSE 'USDT' END)
          ELSE s.symbol
     END as asset_1_symbol,
     CASE WHEN asset_out = 100 THEN REPLACE(s2.symbol, '4-Pool', CASE WHEN s.symbol = 'USDT' THEN 'USDC' ELSE 'USDT' END)
          WHEN asset_out = 101 THEN REPLACE(s2.symbol, '2-Pool', CASE WHEN s.symbol = 'iBTC' THEN 'WBTC' ELSE 'iBTC' END)
+         WHEN asset_out = 102 THEN REPLACE(s2.symbol, '2-Pool-Stbl', CASE WHEN s.symbol = 'USDT' THEN 'USDC' ELSE 'USDT' END)
     ELSE s2.symbol END as asset_2_symbol,
     s.price as asset_1_price,
     s2.price as asset_2_price,
