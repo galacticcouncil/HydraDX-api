@@ -40,11 +40,11 @@ export const JOBS = {
 export const CACHE_SETTINGS = {
   coingeckoV1Pairs: {
     key: "coingecko_v1_pairs",
-    expire_after: 60 * 60,
+    expire_after: 10,
   },
   coingeckoV1Tickers: {
     key: "coingecko_v1_tickers",
-    expire_after: 12 * 60,
+    expire_after: 10,
   },
   hydradxUiV1StatsTvl: {
     key: "hydradx-ui_v1_stats_tvl",
