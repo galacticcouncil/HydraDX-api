@@ -10,6 +10,7 @@ FROM (
     symbol,
     asset_id,
     volume_roll_24_usd,
+    timestamp,
     ROW_NUMBER() OVER (
       PARTITION BY symbol 
       ORDER BY timestamp DESC
@@ -26,4 +27,6 @@ FROM (
 ) a 
 WHERE 
   rn = 1
+AND
+  timestamp > now () - interval '1d'
 GROUP BY 1
