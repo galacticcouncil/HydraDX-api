@@ -13,7 +13,8 @@ SELECT
 FROM (
   SELECT 
     symbol, 
-    volume_roll_24_usd, 
+    volume_roll_24_usd,
+    timestamp, 
     ROW_NUMBER() OVER (
       PARTITION BY symbol 
       ORDER BY timestamp DESC
@@ -30,3 +31,5 @@ FROM (
 ) a 
 WHERE 
   rn = 1
+AND
+  timestamp > now () - interval '1d'
