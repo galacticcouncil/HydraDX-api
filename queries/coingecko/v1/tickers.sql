@@ -518,13 +518,13 @@ xyk_pools AS (
       CONCAT(tm.symbol, '_', tme.symbol) as ticker_id,
       tm.symbol as base_currency,
       tme.symbol as target_currency,
-      amount_in / amount_out as last_price,
+      (amount_in / 10^tm.decimals) / (amount_out / 10^tme.decimals) as last_price,
       SUM(amount_in / 10^tm.decimals) OVER (PARTITION BY asset_in) as base_volume,
       SUM(amount_out / 10^tme.decimals) OVER (PARTITION BY asset_out) as target_volume,
       CONCAT(tm.symbol, '_', tme.symbol) as pool_id,
       0 as liquidity_in_usd,
-      MAX(amount_in / amount_out) OVER (PARTITION BY asset_in) as high,
-      MIN(amount_in / amount_out) OVER (PARTITION BY asset_in) as low,
+      MAX((amount_in / 10^tm.decimals) / (amount_out / 10^tme.decimals)) OVER (PARTITION BY asset_in) as high,
+      MIN((amount_in / 10^tm.decimals) / (amount_out / 10^tme.decimals)) OVER (PARTITION BY asset_in) as low,
       ROW_NUMBER() OVER (PARTITION BY tm.id, tme.id ORDER BY timestamp DESC) as rn
   FROM xyk_ranking xr
   JOIN token_metadata tm ON xr.asset_in = tm.id::text
