@@ -5,6 +5,7 @@ const { JOB_NAME, CONTINUOUS_JOB } = process.env;
 
 import { JOBS } from "./variables.mjs";
 import { cacheCoingeckoTickersJob } from "./jobs/cache_coingecko_tickers_job.mjs";
+import { cacheHydrationWebStatsJob } from "./jobs/cache_hydration-web_stats_job.mjs";
 import { cacheHydradxUiStatsTvlJob } from "./jobs/cache_hydradx-ui_stats_tvl_job.mjs";
 import { cacheCoinmarketcapSummaryJob } from "./jobs/cache_coinmarketcap_summary_job.mjs";
 import { newSqlClient } from "./clients/sql.mjs";
@@ -34,6 +35,10 @@ async function executeJob(job_name) {
   switch (job_name) {
     case JOBS["cacheCoingeckoTickersJob"]: {
       await cacheCoingeckoTickersJob(sqlClient, redisClient);
+      break;
+    }
+    case JOBS["cacheHydrationWebStatsJob"]: {
+      await cacheHydrationWebStatsJob(sqlClient, redisClient);
       break;
     }
     case JOBS["cacheHydradxUiStatsTvlJob"]: {
