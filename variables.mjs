@@ -33,6 +33,7 @@ export const sqlDatabase = () => "squid";
 
 export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
+  cacheHydrationWebStatsJob: "cache-hydration-web-stats-job",
   cacheHydradxUiStatsTvlJob: "cache-hydradx-ui-stats-tvl-job",
   cacheCoinmarketcapSummaryJob: "cache-coinmarketcap-summary-job",
 };
@@ -45,6 +46,10 @@ export const CACHE_SETTINGS = {
   coingeckoV1Tickers: {
     key: "coingecko_v1_tickers",
     expire_after: 12 * 60,
+  },
+  hydrationWebV1Stats: {
+    key: "hydration-web_v1_stats",
+    expire_after: 4 * 60 * 60,
   },
   hydradxUiV1StatsTvl: {
     key: "hydradx-ui_v1_stats_tvl",
