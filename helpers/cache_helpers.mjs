@@ -2,13 +2,13 @@ export async function cachedFetch(sqlClient, redisClient, cacheSetting, qry) {
   let cachedResult = await redisClient.get(cacheSetting.key);
 
   if (cachedResult == null) {
-    cachedResult = await updateCache(sqlClient, redisClient, cacheSetting, qry);
+    cachedResult = await updateCacheFromSql(sqlClient, redisClient, cacheSetting, qry);
   }
 
   return cachedResult;
 }
 
-export async function updateCache(sqlClient, redisClient, cacheSetting, qry) {
+export async function updateCacheFromSql(sqlClient, redisClient, cacheSetting, qry) {
   const { rows } = await sqlClient.query(qry);
   const cachedResult = JSON.stringify(rows);
 
