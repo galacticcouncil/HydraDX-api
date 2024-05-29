@@ -92,5 +92,8 @@ jobs:
       - name: deploy cache_hydradx-ui_stats_tvl_job
         run: gcloud beta run jobs replace .gcp/jobs/cache_hydradx-ui_stats_tvl_job.yml
 
+      - name: deploy cache_hydration-web_stats_job
+        run: gcloud beta run jobs replace .gcp/jobs/cache_hydration-web_stats_job.yml
+
       - name: deploy api-app
         run: gcloud beta run services replace .gcp/hydradx_api_app.yml
