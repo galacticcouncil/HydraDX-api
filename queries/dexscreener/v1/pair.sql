@@ -1,3 +1,5 @@
+-- dexscreenerPair
+
 WITH pair AS (
     SELECT DISTINCT
         args ->> 'pool' AS id,
@@ -25,7 +27,7 @@ SELECT
 FROM pair
 WHERE
     CASE
-        WHEN :pair IS NOT NULL
+        WHEN :pair::text IS NOT NULL
         THEN id = :pair
         ELSE true
     END

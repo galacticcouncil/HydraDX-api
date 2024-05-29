@@ -1,3 +1,9 @@
+-- dexscreenerLatestblock
+
+/*
+  Returns latest block
+*/
+
 SELECT
     MAX(block.height) AS blockNumber,
     CAST(EXTRACT(EPOCH FROM MAX(block.timestamp)) as bigint) AS blockTimestamp

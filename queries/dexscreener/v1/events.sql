@@ -1,3 +1,9 @@
+-- dexscreenerEvents
+
+/*
+  Returns all events within a certain range
+*/
+
 WITH pools AS (
     SELECT
         args ->> 'pool' AS id,
@@ -153,14 +159,12 @@ xyk_aggr AS (
         SUM(xyk.amount_2) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tme.decimals AS reserves_asset_1
     FROM xyk_ordered xyk
     JOIN block ON xyk.block_id = block.id
-    JOIN token_metadata_test tm ON xyk.asset_1_id = tm.id
-    JOIN token_metadata_test tme ON xyk.asset_2_id = tme.id
+    JOIN token_metadata tm ON xyk.asset_1_id = tm.id
+    JOIN token_metadata tme ON xyk.asset_2_id = tme.id
 )
 SELECT
-    json_build_object(
-        'blockNumber', blockNumber,
-        'blockTimestamp', blockTimestamp
-    ) AS block,
+    blockNumber,
+    blockTimestamp,
     eventType,
     txnId,
     txnIndex,
@@ -169,23 +173,10 @@ SELECT
     pairId,
     asset0In,
     asset1Out,
-    (ABS(amount_2) / 10^decimals_2) / (ABS(amount_1) / 10^decimals_1) AS priceNative,
-    json_build_object(
-        'asset0', reserves_asset_0,
-        'asset1', reserves_asset_1
-    ) AS reserves
+    ABS(amount_2) / 10^decimals_2 / (ABS(amount_1) / 10^decimals_1) AS priceNative,
+    reserves_asset_0 AS reservesAsset0,
+    reserves_asset_1 AS reservesAsset1
 FROM xyk_aggr
-WHERE eventType <> 'exit' AND
-CASE
-    WHEN :fromblock IS NOT NULL
-      THEN blockNumber > :fromblock
-    ELSE
-      true
-  END AND
-CASE
-    WHEN :toblock IS NOT NULL
-      THEN blockNumber < :toblock
-    ELSE
-      true
-  END
+WHERE eventType <> 'exit'
+AND blockNumber BETWEEN :fromBlock AND :toBlock
 ORDER BY blockNumber DESC;

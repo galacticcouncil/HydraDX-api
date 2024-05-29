@@ -1,16 +1,18 @@
+-- dexscreenerAsset
+
+/*
+  Returns all tradable asset(s)
+*/
+
 SELECT
     id, 
     name, 
-    symbol, 
-    NULL AS totalSupply, 
-    NULL AS circulatingSupply, 
-    coingecko_id AS coinGeckoId, 
-    coinmarketcap_id AS coinMarketCapId
+    symbol
 FROM
-    token_metadata
+    token_metadata_test
 WHERE
     CASE
-        WHEN :asset IS NOT NULL
+        WHEN :asset::integer IS NOT NULL
         THEN id = :asset
         ELSE true
     END
