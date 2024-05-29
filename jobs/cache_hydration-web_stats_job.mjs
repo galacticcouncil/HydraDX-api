@@ -40,6 +40,5 @@ export async function cacheHydrationWebStatsJob(
 
   await updateCache(redisClient, cacheSetting, JSON.stringify(result));
 
-  console.log(JSON.stringify(result))
   return true;
 }
