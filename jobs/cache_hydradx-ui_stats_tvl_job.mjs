@@ -2,7 +2,7 @@ import yesql from "yesql";
 import path from "path";
 import { dirname, CACHE_SETTINGS } from "../variables.mjs";
 import { getAssets } from "../helpers/asset_helpers.mjs";
-import { updateCache } from "../helpers/cache_helpers.mjs";
+import { updateCacheFromSql } from "../helpers/cache_helpers.mjs";
 
 const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v1/stats"), {
   type: "pg",
@@ -24,7 +24,7 @@ async function cacheAsset(asset, sqlClient, redisClient) {
   let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV1StatsTvl"] };
   cacheSetting.key = cacheSetting.key + "_" + asset;
 
-  await updateCache(
+  await updateCacheFromSql(
     sqlClient,
     redisClient,
     cacheSetting,
