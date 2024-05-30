@@ -27,28 +27,52 @@ export default async (fastify, opts) => {
       response: {
         200: {
           description: "Success Response",
-          type: "object",
-          properties: {
-            pair: {
+          oneOf: [
+            {
               type: "object",
               properties: {
-                id: { type: "string" },
-                dexKey: { type: "string" },
-                asset0Id: { type: "integer" },
-                asset1Id: { type: "integer" },
-                feeBps: { type: "integer" },
-              },
-              required: [
-                "id",
-                "dexKey",
-                "asset0Id",
-                "asset1Id",
-                "feeBps"
-              ]
+                pair: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    dexKey: { type: "string" },
+                    asset0Id: { type: "string" },
+                    asset1Id: { type: "string" },
+                    feeBps: { type: "integer" },
+                  },
+                  required: [
+                    "id",
+                    "dexKey",
+                    "asset0Id",
+                    "asset1Id",
+                    "feeBps"
+                  ]
+                }
+              }
+            },
+            {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  dexKey: { type: "string" },
+                  asset0Id: { type: "string" },
+                  asset1Id: { type: "string" },
+                  feeBps: { type: "integer" },
+                },
+                required: [
+                  "id",
+                  "dexKey",
+                  "asset0Id",
+                  "asset1Id",
+                  "feeBps"
+                ]
+              }
             }
-          }
-        },
-      },
+          ]
+        }
+      }
     },
     handler: async (request, reply) => {
       const pair = request.params.pair ? request.params.pair.toString() : null;
@@ -65,21 +89,34 @@ export default async (fastify, opts) => {
         sqlQuery
       );
 
-      const pairData = JSON.parse(result)[0];
-      const formattedResult = {
-        pair: {
+      const pairsData = JSON.parse(result);
+
+      if (pair) {
+        if (pairsData.length === 0) {
+          reply.code(404).send({ error: "Pair not found" });
+        } else {
+          const pairData = pairsData[0];
+          const formattedResult = {
+            pair: {
+              id: pairData.id,
+              dexKey: pairData.dexkey,
+              asset0Id: pairData.asset0id,
+              asset1Id: pairData.asset1id,
+              feeBps: pairData.feebps,
+            }
+          };
+          reply.send(formattedResult);
+        }
+      } else {
+        const formattedResult = pairsData.map(pairData => ({
           id: pairData.id,
           dexKey: pairData.dexkey,
           asset0Id: pairData.asset0id,
           asset1Id: pairData.asset1id,
-          createdAtBlockNumber: pairData.createdatblocknumber,
-          createdAtBlockTimestamp: pairData.createdatblocktimestamp,
-          createdAtTxnId: pairData.createdattxnid,
           feeBps: pairData.feebps,
-        }
-      };
-
-      reply.send(formattedResult);
+        }));
+        reply.send(formattedResult);
+      }
     },
   });
 };
