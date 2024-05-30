@@ -89,7 +89,7 @@ export default async (fastify, opts) => {
           reply.send({ pair: formattedResult });
         }
       } else {
-        const formattedResult = assetsData.map(assetData => ({
+        const formattedResult = assetsData.map((assetData) => ({
           id: assetData.id,
           name: assetData.name,
           symbol: assetData.symbol,
