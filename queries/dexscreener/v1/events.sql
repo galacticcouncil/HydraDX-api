@@ -159,8 +159,8 @@ xyk_aggr AS (
         SUM(xyk.amount_2) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tme.decimals AS reserves_asset_1
     FROM xyk_ordered xyk
     JOIN block ON xyk.block_id = block.id
-    JOIN token_metadata tm ON xyk.asset_1_id = tm.id
-    JOIN token_metadata tme ON xyk.asset_2_id = tme.id
+    JOIN token_metadata_dexscreener tm ON xyk.asset_1_id = tm.id
+    JOIN token_metadata_dexscreener tme ON xyk.asset_2_id = tme.id
 )
 SELECT
     blockNumber,

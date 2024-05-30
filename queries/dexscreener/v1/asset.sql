@@ -9,7 +9,7 @@ SELECT
     name, 
     symbol
 FROM
-    token_metadata_test
+    token_metadata_dexscreener
 WHERE
     CASE
         WHEN :asset::integer IS NOT NULL
