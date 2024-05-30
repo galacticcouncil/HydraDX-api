@@ -40,15 +40,9 @@ export default async (fastify, opts) => {
                     asset1Id: { type: "string" },
                     feeBps: { type: "integer" },
                   },
-                  required: [
-                    "id",
-                    "dexKey",
-                    "asset0Id",
-                    "asset1Id",
-                    "feeBps"
-                  ]
-                }
-              }
+                  required: ["id", "dexKey", "asset0Id", "asset1Id", "feeBps"],
+                },
+              },
             },
             {
               type: "array",
@@ -61,18 +55,12 @@ export default async (fastify, opts) => {
                   asset1Id: { type: "string" },
                   feeBps: { type: "integer" },
                 },
-                required: [
-                  "id",
-                  "dexKey",
-                  "asset0Id",
-                  "asset1Id",
-                  "feeBps"
-                ]
-              }
-            }
-          ]
-        }
-      }
+                required: ["id", "dexKey", "asset0Id", "asset1Id", "feeBps"],
+              },
+            },
+          ],
+        },
+      },
     },
     handler: async (request, reply) => {
       const pair = request.params.pair ? request.params.pair.toString() : null;
@@ -103,12 +91,12 @@ export default async (fastify, opts) => {
               asset0Id: pairData.asset0id,
               asset1Id: pairData.asset1id,
               feeBps: pairData.feebps,
-            }
+            },
           };
           reply.send(formattedResult);
         }
       } else {
-        const formattedResult = pairsData.map(pairData => ({
+        const formattedResult = pairsData.map((pairData) => ({
           id: pairData.id,
           dexKey: pairData.dexkey,
           asset0Id: pairData.asset0id,

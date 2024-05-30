@@ -40,9 +40,9 @@ export default async (fastify, opts) => {
                 type: "object",
                 properties: {
                   blockNumber: { type: "integer" },
-                  blockTimestamp: { type: "integer" }
+                  blockTimestamp: { type: "integer" },
                 },
-                required: ["blockNumber", "blockTimestamp"]
+                required: ["blockNumber", "blockTimestamp"],
               },
               eventType: { type: "string" },
               txnId: { type: "string" },
@@ -57,51 +57,63 @@ export default async (fastify, opts) => {
                 type: "object",
                 properties: {
                   asset0: { type: "number" },
-                  asset1: { type: "number" }
+                  asset1: { type: "number" },
                 },
-                required: ["asset0", "asset1"]
-              }
+                required: ["asset0", "asset1"],
+              },
             },
-            required: ["block", "eventType", "txnId", "txnIndex", "eventIndex", "maker", "pairId", "asset0In", "asset1Out", "priceNative", "reserves"]
-          }
+            required: [
+              "block",
+              "eventType",
+              "txnId",
+              "txnIndex",
+              "eventIndex",
+              "maker",
+              "pairId",
+              "asset0In",
+              "asset1Out",
+              "priceNative",
+              "reserves",
+            ],
+          },
         },
       },
     },
     handler: async (request, reply) => {
-        const { fromBlock, toBlock } = request.params;
-        const sqlQuery = sqlQueries.dexscreenerEvents({ fromBlock, toBlock });
+      const { fromBlock, toBlock } = request.params;
+      const sqlQuery = sqlQueries.dexscreenerEvents({ fromBlock, toBlock });
 
-        let cacheSetting = { ...CACHE_SETTINGS["dexscreenerV1Events"] };
-        cacheSetting.key = `${cacheSetting.key}_${fromBlock}_${toBlock}`;
+      let cacheSetting = { ...CACHE_SETTINGS["dexscreenerV1Events"] };
+      cacheSetting.key = `${cacheSetting.key}_${fromBlock}_${toBlock}`;
 
-        const result = await cachedFetch(
-          fastify.pg,
-          fastify.redis,
-          cacheSetting,
-          sqlQuery
-        );
+      const result = await cachedFetch(
+        fastify.pg,
+        fastify.redis,
+        cacheSetting,
+        sqlQuery
+      );
 
-        const formattedResult = JSON.parse(result).map(event => ({
-          block: {
-            blockNumber: event.blocknumber,
-            blockTimestamp: event.blocktimestamp,
-          },
-          eventType: event.eventtype,
-          txnId: event.txnid,
-          txnIndex: event.txnindex,
-          eventIndex: event.eventindex,
-          maker: event.maker,
-          pairId: event.pairid,
-          asset0In: parseFloat(event.asset0in),
-          asset1Out: parseFloat(event.asset1out),
-          priceNative: parseFloat(event.pricenative),
-          reserves: {
-            asset0: parseFloat(event.reservesasset0),
-            asset1: parseFloat(event.reservesasset1),
-          },
-        }));
+      const formattedResult = JSON.parse(result).map((event) => ({
+        block: {
+          blockNumber: event.blocknumber,
+          blockTimestamp: event.blocktimestamp,
+        },
+        eventType: event.eventtype,
+        txnId: event.txnid,
+        txnIndex: event.txnindex,
+        eventIndex: event.eventindex,
+        maker: event.maker,
+        pairId: event.pairid,
+        asset0In: parseFloat(event.asset0in),
+        asset1Out: parseFloat(event.asset1out),
+        priceNative: parseFloat(event.pricenative),
+        reserves: {
+          asset0: parseFloat(event.reservesasset0),
+          asset1: parseFloat(event.reservesasset1),
+        },
+      }));
 
-        reply.send(formattedResult);
+      reply.send(formattedResult);
     },
   });
 };

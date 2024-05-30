@@ -25,9 +25,9 @@ export default async (fastify, opts) => {
               type: "object",
               properties: {
                 blockNumber: { type: "integer" },
-                blockTimestamp: { type: "integer" }
+                blockTimestamp: { type: "integer" },
               },
-              required: ["blockNumber", "blockTimestamp"]
+              required: ["blockNumber", "blockTimestamp"],
             },
           },
         },
@@ -48,8 +48,8 @@ export default async (fastify, opts) => {
       const formattedResult = {
         block: {
           blockNumber: latestBlock.blocknumber,
-          blockTimestamp: parseInt(latestBlock.blocktimestamp)
-        }
+          blockTimestamp: parseInt(latestBlock.blocktimestamp),
+        },
       };
 
       reply.send(formattedResult);
