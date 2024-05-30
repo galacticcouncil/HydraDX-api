@@ -10,45 +10,62 @@ const sqlQueries = yesql(path.join(dirname(), "queries/dexscreener/v1/"), {
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/asset/:asset?",
+    url: "/asset",
     method: ["GET"],
     schema: {
       description: "Asset info",
       tags: ["dexscreener/v1"],
-      params: {
+      querystring: {
         type: "object",
         properties: {
-          asset: {
-            type: "integer",
+          id: {
+            type: "string",
             description: "Asset (id). Leave empty for all assets.",
           },
         },
+        additionalProperties: false,
       },
       response: {
         200: {
           description: "Success Response",
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: { type: "integer" },
-              name: { type: "string" },
-              symbol: { type: "string" },
+          oneOf: [
+            {
+              type: "object",
+              properties: {
+                pair: {
+                  type: "object",
+                  properties: {
+                    id: { type: "integer" },
+                    name: { type: "string" },
+                    symbol: { type: "string" },
+                  },
+                  required: ["id", "name", "symbol"],
+                },
+              },
             },
-          },
+            {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "integer" },
+                  name: { type: "string" },
+                  symbol: { type: "string" },
+                },
+                required: ["id", "name", "symbol"],
+              },
+            },
+          ],
         },
       },
     },
     handler: async (request, reply) => {
-      const asset =
-        request.params.asset !== undefined && request.params.asset !== null
-          ? request.params.asset.toString()
-          : null;
+      const asset = request.query.id ? request.query.id.toString() : null;
 
       const sqlQuery = sqlQueries.dexscreenerAsset({ asset });
 
       let cacheSetting = { ...CACHE_SETTINGS["dexscreenerV1Asset"] };
-      cacheSetting.key = cacheSetting.key + "_" + asset;
+      cacheSetting.key = cacheSetting.key + (asset ? `_${asset}` : "");
 
       const result = await cachedFetch(
         fastify.pg,
@@ -57,7 +74,28 @@ export default async (fastify, opts) => {
         sqlQuery
       );
 
-      reply.send(JSON.parse(result));
+      const assetsData = JSON.parse(result);
+
+      if (asset) {
+        if (assetsData.length === 0) {
+          reply.code(404).send({ error: "Asset not found" });
+        } else {
+          const assetData = assetsData[0];
+          const formattedResult = {
+            id: assetData.id,
+            name: assetData.name,
+            symbol: assetData.symbol,
+          };
+          reply.send({ pair: formattedResult });
+        }
+      } else {
+        const formattedResult = assetsData.map(assetData => ({
+          id: assetData.id,
+          name: assetData.name,
+          symbol: assetData.symbol,
+        }));
+        reply.send(formattedResult);
+      }
     },
   });
 };

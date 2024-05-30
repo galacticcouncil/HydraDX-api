@@ -10,12 +10,12 @@ const sqlQueries = yesql(path.join(dirname(), "queries/dexscreener/v1/"), {
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/events/:fromBlock-:toBlock",
+    url: "/events",
     method: ["GET"],
     schema: {
       description: "Events info",
       tags: ["dexscreener/v1"],
-      params: {
+      querystring: {
         type: "object",
         properties: {
           fromBlock: {
@@ -28,6 +28,7 @@ export default async (fastify, opts) => {
           },
         },
         required: ["fromBlock", "toBlock"],
+        additionalProperties: false,
       },
       response: {
         200: {
@@ -80,7 +81,7 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const { fromBlock, toBlock } = request.params;
+      const { fromBlock, toBlock } = request.query;
       const sqlQuery = sqlQueries.dexscreenerEvents({ fromBlock, toBlock });
 
       let cacheSetting = { ...CACHE_SETTINGS["dexscreenerV1Events"] };

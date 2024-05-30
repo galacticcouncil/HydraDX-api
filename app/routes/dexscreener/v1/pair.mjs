@@ -10,19 +10,20 @@ const sqlQueries = yesql(path.join(dirname(), "queries/dexscreener/v1/"), {
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/pair/:pair?",
+    url: "/pair",
     method: ["GET"],
     schema: {
       description: "Pair info",
       tags: ["dexscreener/v1"],
-      params: {
+      querystring: {
         type: "object",
         properties: {
-          pair: {
+          id: {
             type: "string",
             description: "Pair (id). Leave empty for all pairs.",
           },
         },
+        additionalProperties: false,
       },
       response: {
         200: {
@@ -63,7 +64,7 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      const pair = request.params.pair ? request.params.pair.toString() : null;
+      const pair = request.query.id ? request.query.id.toString() : null;
 
       const sqlQuery = sqlQueries.dexscreenerPair({ pair });
 
