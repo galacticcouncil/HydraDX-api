@@ -111,4 +111,20 @@ export const CACHE_SETTINGS = {
     key: "hydradx-ui_v2_stats_volume_alltime",
     expire_after: 60,
   },
+  dexscreenerV1Asset: {
+    key: "dexscreener_v1_asset",
+    expire_after: 60,
+  },
+  dexscreenerV1Events: {
+    key: "dexscreener_v1_events",
+    expire_after: 60,
+  },
+  dexscreenerV1Latestblock: {
+    key: "dexscreener_v1_latest_block",
+    expire_after: 60,
+  },
+  dexscreenerV1Pair: {
+    key: "dexscreener_v1_pair",
+    expire_after: 60,
+  },
 };
