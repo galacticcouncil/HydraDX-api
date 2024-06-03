@@ -32,14 +32,15 @@ export default async (fastify, opts) => {
             {
               type: "object",
               properties: {
-                pair: {
+                asset: {
                   type: "object",
                   properties: {
                     id: { type: "integer" },
                     name: { type: "string" },
                     symbol: { type: "string" },
+                    totalSupply: { type: "string" },
                   },
-                  required: ["id", "name", "symbol"],
+                  required: ["id", "name", "symbol", "totalSupply"],
                 },
               },
             },
@@ -51,8 +52,9 @@ export default async (fastify, opts) => {
                   id: { type: "integer" },
                   name: { type: "string" },
                   symbol: { type: "string" },
+                  totalSupply: { type: "string" },
                 },
-                required: ["id", "name", "symbol"],
+                required: ["id", "name", "symbol", "totalSupply"],
               },
             },
           ],
@@ -85,14 +87,16 @@ export default async (fastify, opts) => {
             id: assetData.id,
             name: assetData.name,
             symbol: assetData.symbol,
+            totalSupply: assetData.total_supply,
           };
-          reply.send({ pair: formattedResult });
+          reply.send({ asset: formattedResult });
         }
       } else {
         const formattedResult = assetsData.map((assetData) => ({
           id: assetData.id,
           name: assetData.name,
           symbol: assetData.symbol,
+          totalSupply: assetData.total_supply,
         }));
         reply.send(formattedResult);
       }

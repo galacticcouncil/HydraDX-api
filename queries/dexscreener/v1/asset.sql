@@ -7,7 +7,8 @@
 SELECT
     id, 
     name, 
-    symbol
+    symbol,
+    (total_supply / 10^decimals)::numeric as total_supply
 FROM
     token_metadata_dexscreener
 WHERE
