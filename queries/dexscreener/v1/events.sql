@@ -144,7 +144,7 @@ xyk_aggr AS (
         block.height AS blockNumber,
         CAST(EXTRACT(EPOCH FROM block.timestamp) AS bigint) AS blockTimestamp,
         xyk.eventType,
-        xyk.extrinsic_id AS txnId,
+        concat(block.height, '-', xyk.index_in_block) AS txnId,
         xyk.index_in_block AS txnIndex,
         xyk.pos AS eventIndex,
         xyk.sender AS maker,
