@@ -53,6 +53,8 @@ export default async (fastify, opts) => {
               pairId: { type: "string" },
               asset0In: { type: "number" },
               asset1Out: { type: "number" },
+              amount0: { type: "number" },
+              amount1: { type: "number" },
               priceNative: { type: "number" },
               reserves: {
                 type: "object",
@@ -71,9 +73,6 @@ export default async (fastify, opts) => {
               "eventIndex",
               "maker",
               "pairId",
-              "asset0In",
-              "asset1Out",
-              "priceNative",
               "reserves",
             ],
           },
@@ -94,25 +93,41 @@ export default async (fastify, opts) => {
         sqlQuery
       );
 
-      const formattedResult = JSON.parse(result).map((event) => ({
-        block: {
-          blockNumber: event.blocknumber,
-          blockTimestamp: event.blocktimestamp,
-        },
-        eventType: event.eventtype,
-        txnId: event.txnid,
-        txnIndex: event.txnindex,
-        eventIndex: event.eventindex,
-        maker: event.maker,
-        pairId: event.pairid,
-        asset0In: parseFloat(event.asset0in),
-        asset1Out: parseFloat(event.asset1out),
-        priceNative: parseFloat(event.pricenative),
-        reserves: {
-          asset0: parseFloat(event.reservesasset0),
-          asset1: parseFloat(event.reservesasset1),
-        },
-      }));
+      const formattedResult = JSON.parse(result).map((event) => {
+        const commonFields = {
+          block: {
+            blockNumber: event.blocknumber,
+            blockTimestamp: event.blocktimestamp,
+          },
+          eventType: event.eventtype,
+          txnId: event.txnid,
+          txnIndex: event.txnindex,
+          eventIndex: event.eventindex,
+          maker: event.maker,
+          pairId: event.pairid,
+          reserves: {
+            asset0: event.reservesasset0,
+            asset1: event.reservesasset1,
+          },
+        };
+
+        if (event.eventtype === "swap") {
+          return {
+            ...commonFields,
+            asset0In: event.amount0,
+            asset1Out: event.amount1,
+            priceNative: event.pricenative,
+          };
+        } else if (event.eventtype === "join") {
+          return {
+            ...commonFields,
+            amount0: event.amount0,
+            amount1: event.amount1,
+          };
+        } else {
+          return commonFields;
+        }
+      });
 
       reply.send(formattedResult);
     },

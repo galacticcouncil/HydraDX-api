@@ -77,8 +77,8 @@ xyk AS (
         CAST(e2.args ->> 'amountB' AS numeric) AS amount_2,
         e2.args ->> 'who' AS sender,
         'join' AS eventType,
-        1 AS index_in_block,
-        2 AS pos,
+        e2.index_in_block,
+        e2.pos,
         e1.args ->> 'to' AS pairId
     FROM event e1
     JOIN event e2 ON e1.args ->> 'from' = e2.args ->> 'who' AND e1.block_id = e2.block_id AND e1.extrinsic_id = e2.extrinsic_id
@@ -102,8 +102,8 @@ xyk AS (
         0 AS amount_2,
         e2.args ->> 'who' AS sender,
         'exit' AS eventType,
-        e1.index_in_block,
-        e1.pos,
+        e2.index_in_block,
+        e2.pos,
         e1.args ->> 'from' AS pairId
     FROM event e1
     JOIN event e2 ON e1.args ->> 'to' = e2.args ->> 'who' AND e1.block_id = e2.block_id
@@ -149,12 +149,8 @@ xyk_aggr AS (
         xyk.pos AS eventIndex,
         xyk.sender AS maker,
         xyk.pairId,
-        xyk.asset_1_id AS asset0In,
-        xyk.asset_2_id AS asset1Out,
-        xyk.amount_1,
-        xyk.amount_2,
-        tm.decimals AS decimals_1,
-        tme.decimals AS decimals_2,
+        ABS(xyk.amount_1 / 10^tm.decimals) AS amount0,
+        ABS(xyk.amount_2 / 10^tme.decimals) AS amount1,
         SUM(xyk.amount_1) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tm.decimals AS reserves_asset_0,
         SUM(xyk.amount_2) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tme.decimals AS reserves_asset_1
     FROM xyk_ordered xyk
@@ -171,9 +167,9 @@ SELECT
     eventIndex,
     maker,
     pairId,
-    asset0In,
-    asset1Out,
-    ABS(amount_2) / 10^decimals_2 / (ABS(amount_1) / 10^decimals_1) AS priceNative,
+    amount0,
+    amount1,
+    amount1 / amount0 AS priceNative,
     reserves_asset_0 AS reservesAsset0,
     reserves_asset_1 AS reservesAsset1
 FROM xyk_aggr
