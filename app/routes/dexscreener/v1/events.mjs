@@ -129,7 +129,24 @@ export default async (fastify, opts) => {
         }
       });
 
-      reply.send(formattedResult);
+      const customJsonStringify = (data, replacer = null, space = null) => {
+        return JSON.stringify(
+          data,
+          (key, value) => {
+            if (typeof value === "number") {
+              return value
+                .toFixed(20)
+                .replace(/([0-9]+(\.[0-9]+[1-9])?)(\.?0+$)/, "$1");
+            }
+            return value;
+          },
+          space
+        );
+      };
+
+      const responseString = customJsonStringify(formattedResult);
+
+      reply.header("Content-Type", "application/json").send(responseString);
     },
   });
 };
