@@ -99,7 +99,7 @@ export default async (fastify, opts) => {
             blockNumber: event.blocknumber,
             blockTimestamp: event.blocktimestamp,
           },
-          eventType: event.eventtype,
+          eventType: "swap", // Default eventType for swap and sell
           txnId: event.txnid,
           txnIndex: event.txnindex,
           eventIndex: event.eventindex,
@@ -111,21 +111,32 @@ export default async (fastify, opts) => {
           },
         };
 
-        if (event.eventtype === "swap") {
+        if (event.eventtype === "swap" || event.eventtype === "buy") {
           return {
             ...commonFields,
             asset0In: event.amount0,
             asset1Out: event.amount1,
             priceNative: event.pricenative,
           };
+        } else if (event.eventtype === "sell") {
+          return {
+            ...commonFields,
+            asset0Out: event.amount0, // Swapping key from asset0In to asset0Out
+            asset1In: event.amount1, // Swapping key from asset1Out to asset1In
+            priceNative: event.pricenative,
+          };
         } else if (event.eventtype === "join") {
           return {
             ...commonFields,
+            eventType: event.eventtype, // Keep original event type for "join"
             amount0: event.amount0,
             amount1: event.amount1,
           };
         } else {
-          return commonFields;
+          return {
+            ...commonFields,
+            eventType: event.eventtype, // Handle any other event types
+          };
         }
       });
 

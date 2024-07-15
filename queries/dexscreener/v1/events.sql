@@ -21,15 +21,15 @@ xyk AS (
         CAST(args ->> 'buyPrice' AS numeric) AS amount_1,
         -CAST(args ->> 'amount' AS numeric) AS amount_2,
         args ->> 'who' AS sender,
-        'swap' AS eventType,
+        'buy' AS eventType,
         index_in_block,
         pos,
         args ->> 'pool' AS pairId
     FROM event e
     WHERE name = 'XYK.BuyExecuted'
-    
+
     UNION ALL
-    
+
     SELECT DISTINCT
         block_id,
         extrinsic_id,
@@ -38,36 +38,36 @@ xyk AS (
         CAST(args ->> 'amount' AS numeric) AS amount_1,
         -CAST(args ->> 'salePrice' AS numeric) AS amount_2,
         args ->> 'who' AS sender,
-        'swap' AS eventType,
+        'sell' AS eventType,
         index_in_block,
         pos,
         args ->> 'pool' AS pairId
     FROM event e
     WHERE name = 'XYK.SellExecuted'
-    
+
     UNION ALL
-    
+
     SELECT DISTINCT
         e1.block_id,
-        e1.extrinsic_id,
+        e2.extrinsic_id,
         e1.args ->> 'currencyId' AS asset_1_id,
         CASE
             WHEN e1.args ->> 'currencyId' = e2.args ->> 'assetA' THEN e2.args ->> 'assetB'
             ELSE e2.args ->> 'assetA'
         END AS asset_2_id,
         CAST(e1.args ->> 'amount' AS numeric) AS amount_1,
-        CAST(e2.args ->> 'initialSharesAmount' AS numeric) AS amount_2,
+        0 AS amount_2,
         e2.args ->> 'who' AS sender,
         'join' AS eventType,
-        e1.index_in_block,
-        e1.pos,
+        e2.index_in_block,
+        e2.pos,
         e2.args ->> 'pool' AS pairId
     FROM event e1
-    JOIN event e2 ON e1.args ->> 'who' = e2.args ->> 'pool' AND e1.block_id = e2.block_id
-    WHERE e1.name = 'Tokens.Endowed' AND e2.name = 'XYK.PoolCreated'
-    
+    JOIN event e2 ON e1.args ->> 'to' = e2.args ->> 'pool' AND e1.block_id = e2.block_id
+    WHERE e1.name = 'Currencies.Transferred' AND e2.name = 'XYK.PoolCreated'-- AND e1.block_id like '%4774269%'
+
     UNION ALL
-    
+
     SELECT DISTINCT
         e1.block_id,
         e1.extrinsic_id,
@@ -87,9 +87,9 @@ xyk AS (
         e1.args ->> 'to' = (SELECT DISTINCT id FROM pools WHERE asset0Id = e2.args ->> 'assetA' AND asset1Id = e2.args ->> 'assetB')
         OR e1.args ->> 'to' = (SELECT DISTINCT id FROM pools WHERE asset0Id = e2.args ->> 'assetB' AND asset1Id = e2.args ->> 'assetA')
     )
-    
+
     UNION ALL
-    
+
     SELECT DISTINCT
         e1.block_id,
         e1.extrinsic_id,
@@ -152,7 +152,8 @@ xyk_aggr AS (
         ABS(xyk.amount_1 / 10^tm.decimals) AS amount0,
         ABS(xyk.amount_2 / 10^tme.decimals) AS amount1,
         SUM(xyk.amount_1) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tm.decimals AS reserves_asset_0,
-        SUM(xyk.amount_2) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tme.decimals AS reserves_asset_1
+        SUM(xyk.amount_2) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tme.decimals AS reserves_asset_1,
+        asset_1_id,asset_2_id
     FROM xyk_ordered xyk
     JOIN block ON xyk.block_id = block.id
     JOIN token_metadata_dexscreener tm ON xyk.asset_1_id = tm.id
@@ -169,10 +170,12 @@ SELECT
     pairId,
     amount0,
     amount1,
-    amount1 / amount0 AS priceNative,
+    CASE WHEN amount0 = 0 OR amount1 = 0 THEN 0 ELSE amount1 / amount0 END AS priceNative,
     reserves_asset_0 AS reservesAsset0,
-    reserves_asset_1 AS reservesAsset1
+    reserves_asset_1 AS reservesAsset1,
+    asset_1_id,
+    asset_2_id
 FROM xyk_aggr
-WHERE eventType <> 'exit'
+WHERE reserves_asset_0 > 0 AND reserves_asset_1 > 0
 AND blockNumber BETWEEN :fromBlock AND :toBlock
 ORDER BY blockNumber DESC;
