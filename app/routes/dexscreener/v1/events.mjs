@@ -121,21 +121,21 @@ export default async (fastify, opts) => {
         } else if (event.eventtype === "sell") {
           return {
             ...commonFields,
-            asset0Out: event.amount0, // Swapping key from asset0In to asset0Out
-            asset1In: event.amount1, // Swapping key from asset1Out to asset1In
+            asset0Out: event.amount0, // indicate sell
+            asset1In: event.amount1, // indicate sell
             priceNative: event.pricenative,
           };
-        } else if (event.eventtype === "join") {
+        } else if (event.eventtype === "join" || event.eventtype === "exit") {
           return {
             ...commonFields,
-            eventType: event.eventtype, // Keep original event type for "join"
+            eventType: event.eventtype,
             amount0: event.amount0,
             amount1: event.amount1,
           };
         } else {
           return {
             ...commonFields,
-            eventType: event.eventtype, // Handle any other event types
+            eventType: event.eventtype,
           };
         }
       });
