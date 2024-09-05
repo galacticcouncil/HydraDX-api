@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/node
-FROM node:19 AS api-base
+FROM node:22 AS api-base
 
 # Create and change to the app directory.
 WORKDIR /usr/src/app
