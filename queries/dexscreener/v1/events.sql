@@ -167,6 +167,7 @@ xyk_casted AS (
     SELECT
         block_id,
         extrinsic_id,
+        CAST((regexp_matches(extrinsic_id, '-([0-9]+)-'))[1] AS INTEGER) AS extrinsic_index,
         CAST(asset_1_id AS numeric) AS asset_1_id,
         CAST(asset_2_id AS numeric) AS asset_2_id,
         CAST(amount_1 AS numeric) AS amount_1,
@@ -182,6 +183,7 @@ xyk_ordered AS (
     SELECT
         block_id,
         extrinsic_id,
+        extrinsic_index,
         asset_1_id as asset_in_id,
         asset_2_id as asset_out_id,
         CASE WHEN asset_1_id < asset_2_id THEN asset_1_id ELSE asset_2_id END AS asset_1_id,
@@ -203,9 +205,9 @@ xyk_aggr AS (
              WHEN xyk.eventType = 'swap' AND asset_1_id = asset_out_id THEN 'sell'
              ELSE xyk.eventType
         END AS eventType,
-        concat(block.height, '-', xyk.index_in_block) AS txnId,
-        xyk.index_in_block AS txnIndex,
-        xyk.pos AS eventIndex,
+        concat(block.height, '-', xyk.extrinsic_index) AS txnId,
+        xyk.extrinsic_index AS txnIndex,
+        concat(block.height, '-', xyk.index_in_block) AS eventIndex,
         xyk.sender AS maker,
         xyk.pairId,
         ABS(xyk.amount_1 / 10^tm.decimals) AS amount0,
