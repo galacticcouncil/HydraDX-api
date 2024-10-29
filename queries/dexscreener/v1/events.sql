@@ -83,7 +83,7 @@ xyk AS (
         CAST(args ->> 'buyPrice' AS numeric) AS amount_1,
         -CAST(args ->> 'amount' AS numeric) AS amount_2,
         args ->> 'who' AS sender,
-        'buy' AS eventType,
+        'swap' AS eventType,
         index_in_block,
         pos,
         args ->> 'pool' AS pairId
@@ -100,7 +100,7 @@ xyk AS (
         CAST(args ->> 'amount' AS numeric) AS amount_1,
         -CAST(args ->> 'salePrice' AS numeric) AS amount_2,
         args ->> 'who' AS sender,
-        'sell' AS eventType,
+        'swap' AS eventType,
         index_in_block,
         pos,
         args ->> 'pool' AS pairId
@@ -182,6 +182,8 @@ xyk_ordered AS (
     SELECT
         block_id,
         extrinsic_id,
+        asset_1_id as asset_in_id,
+        asset_2_id as asset_out_id,
         CASE WHEN asset_1_id < asset_2_id THEN asset_1_id ELSE asset_2_id END AS asset_1_id,
         CASE WHEN asset_1_id < asset_2_id THEN asset_2_id ELSE asset_1_id END AS asset_2_id,
         CASE WHEN asset_1_id < asset_2_id THEN amount_1 ELSE amount_2 END AS amount_1,
@@ -197,7 +199,10 @@ xyk_aggr AS (
     SELECT
         block.height AS blockNumber,
         CAST(EXTRACT(EPOCH FROM block.timestamp) AS bigint) AS blockTimestamp,
-        xyk.eventType,
+        CASE WHEN xyk.eventType = 'swap' AND asset_1_id = asset_in_id THEN 'buy'
+             WHEN xyk.eventType = 'swap' AND asset_1_id = asset_out_id THEN 'sell'
+             ELSE xyk.eventType
+        END AS eventType,
         concat(block.height, '-', xyk.index_in_block) AS txnId,
         xyk.index_in_block AS txnIndex,
         xyk.pos AS eventIndex,
@@ -207,7 +212,8 @@ xyk_aggr AS (
         ABS(xyk.amount_2 / 10^tme.decimals) AS amount1,
         SUM(xyk.amount_1) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tm.decimals AS reserves_asset_0,
         SUM(xyk.amount_2) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tme.decimals AS reserves_asset_1,
-        asset_1_id,asset_2_id
+        asset_1_id,
+        asset_2_id
     FROM xyk_ordered xyk
     JOIN block ON xyk.block_id = block.id
     JOIN token_metadata_dexscreener tm ON xyk.asset_1_id = tm.id
