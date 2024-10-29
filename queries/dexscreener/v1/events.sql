@@ -207,7 +207,7 @@ xyk_aggr AS (
         END AS eventType,
         concat(block.height, '-', xyk.extrinsic_index) AS txnId,
         xyk.extrinsic_index AS txnIndex,
-        xyk.index_in_block AS eventIndex,
+        concat(block.height, '-', xyk.index_in_block) AS eventIndex,
         xyk.sender AS maker,
         xyk.pairId,
         ABS(xyk.amount_1 / 10^tm.decimals) AS amount0,
