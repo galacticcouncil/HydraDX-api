@@ -214,7 +214,8 @@ xyk_aggr AS (
         ABS(xyk.amount_2 / 10^tme.decimals) AS amount1,
         SUM(xyk.amount_1) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tm.decimals AS reserves_asset_0,
         SUM(xyk.amount_2) OVER (PARTITION BY xyk.asset_1_id, xyk.asset_2_id ORDER BY block.timestamp) / 10^tme.decimals AS reserves_asset_1,
-        asset_1_id,asset_2_id,asset_in_id,asset_out_id
+        asset_1_id,
+        asset_2_id
     FROM xyk_ordered xyk
     JOIN block ON xyk.block_id = block.id
     JOIN token_metadata_dexscreener tm ON xyk.asset_1_id = tm.id
