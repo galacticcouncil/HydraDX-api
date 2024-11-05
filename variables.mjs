@@ -67,7 +67,7 @@ export const CACHE_SETTINGS = {
   },
   hydradxUiV1StatsTvl: {
     key: "hydradx-ui_v1_stats_tvl",
-    expire_after: 10 * 60,
+    expire_after: 60 * 60,
   },
   hydradxUiV1StatsVolume: {
     key: "hydradx-ui_v1_stats_volume",
@@ -103,7 +103,7 @@ export const CACHE_SETTINGS = {
   },
   hydradxUiV2StatsVolume: {
     key: "hydradx-ui_v2_stats_volume",
-    expire_after: 3 * 60,
+    expire_after: 60 * 60,
   },
   hydradxUiV2statsVolumeAlltime: {
     key: "hydradx-ui_v2_stats_volume_alltime",
