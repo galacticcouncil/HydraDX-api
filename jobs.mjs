@@ -7,6 +7,7 @@ import { JOBS } from "./variables.mjs";
 import { cacheCoingeckoTickersJob } from "./jobs/cache_coingecko_tickers_job.mjs";
 import { cacheHydrationWebStatsJob } from "./jobs/cache_hydration-web_stats_job.mjs";
 import { cacheHydradxUiStatsTvlJob } from "./jobs/cache_hydradx-ui_stats_tvl_job.mjs";
+import { cacheHydradxUiV2StatsVolumeJob } from "./jobs/cache_hydradx-ui_v2_stats_volume_job.mjs";
 import { cacheCoinmarketcapSummaryJob } from "./jobs/cache_coinmarketcap_summary_job.mjs";
 import { newSqlClient } from "./clients/sql.mjs";
 import { newRedisClient } from "./clients/redis.mjs";
@@ -43,6 +44,10 @@ async function executeJob(job_name) {
     }
     case JOBS["cacheHydradxUiStatsTvlJob"]: {
       await cacheHydradxUiStatsTvlJob(sqlClient, redisClient);
+      break;
+    }
+    case JOBS["cacheHydradxUiV2StatsVolumeJob"]: {
+      await cacheHydradxUiV2StatsVolumeJob(sqlClient, redisClient);
       break;
     }
     case JOBS["cacheCoinmarketcapSummaryJob"]: {
