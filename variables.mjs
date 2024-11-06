@@ -1,6 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import {cacheHydradxUiV2StatsVolumeJob} from "./jobs/cache_hydradx-ui_v2_stats_volume_job.mjs";
+import { cacheHydradxUiV2StatsVolumeJob } from "./jobs/cache_hydradx-ui_v2_stats_volume_job.mjs";
 
 export const IS_DOCKER_RUN = process.env.DOCKER_RUN !== undefined;
 export const IS_GOOGLE_CLOUD_RUN = process.env.K_SERVICE !== undefined;
