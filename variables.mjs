@@ -1,5 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import {cacheHydradxUiV2StatsVolumeJob} from "./jobs/cache_hydradx-ui_v2_stats_volume_job.mjs";
 
 export const IS_DOCKER_RUN = process.env.DOCKER_RUN !== undefined;
 export const IS_GOOGLE_CLOUD_RUN = process.env.K_SERVICE !== undefined;
@@ -35,6 +36,7 @@ export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
   cacheHydrationWebStatsJob: "cache-hydration-web-stats-job",
   cacheHydradxUiStatsTvlJob: "cache-hydradx-ui-stats-tvl-job",
+  cacheHydradxUiV2StatsVolumeJob: "cache-hydradx-ui-v2-stats-volume-job",
   cacheCoinmarketcapSummaryJob: "cache-coinmarketcap-summary-job",
 };
 
@@ -51,10 +53,6 @@ export const CACHE_SETTINGS = {
     key: "hydration-web_v1_stats",
     expire_after: 4 * 60 * 60,
   },
-  hydradxUiV1StatsTvl: {
-    key: "hydradx-ui_v1_stats_tvl",
-    expire_after: 60 * 60,
-  },
   hydradxUiV1StatsChartLrna: {
     key: "hydradx-ui_v1_stats_chart_lrna",
     expire_after: 10 * 60,
@@ -69,7 +67,7 @@ export const CACHE_SETTINGS = {
   },
   hydradxUiV1StatsTvl: {
     key: "hydradx-ui_v1_stats_tvl",
-    expire_after: 10 * 60,
+    expire_after: 60 * 60,
   },
   hydradxUiV1StatsVolume: {
     key: "hydradx-ui_v1_stats_volume",
@@ -101,11 +99,11 @@ export const CACHE_SETTINGS = {
   },
   hydradxUiV2StatsTvl: {
     key: "hydradx-ui_v2_stats_tvl",
-    expire_after: 60,
+    expire_after: 3 * 60,
   },
   hydradxUiV2StatsVolume: {
-    key: "hydradx-ui_v2_stats_volume2",
-    expire_after: 60,
+    key: "hydradx-ui_v2_stats_volume",
+    expire_after: 60 * 60,
   },
   hydradxUiV2statsVolumeAlltime: {
     key: "hydradx-ui_v2_stats_volume_alltime",
