@@ -32,6 +32,8 @@ remove_data AS (
     FROM event e1
     JOIN event e2 ON e1.args ->> 'to' = e2.args ->> 'who' AND e1.block_id = e2.block_id
     WHERE e1.name = 'Currencies.Transferred' AND e2.name = 'XYK.LiquidityRemoved' AND NOT (e1.args ->> 'amount' = '1000000000000' AND e1.args ->> 'currencyId' = '0')
+    -- handle farm withdraw as an exception (decoded pool name 'modlxykLMpID')
+      AND e1.args ->> 'from' <> '0x6d6f646c78796b4c4d7049440000000000000000000000000000000000000000'
 ),
 rn1 AS (
     SELECT *
