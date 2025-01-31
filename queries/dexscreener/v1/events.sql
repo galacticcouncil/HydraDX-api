@@ -34,6 +34,8 @@ remove_data AS (
     WHERE e1.name = 'Currencies.Transferred' AND e2.name = 'XYK.LiquidityRemoved' AND NOT (e1.args ->> 'amount' = '1000000000000' AND e1.args ->> 'currencyId' = '0')
     -- handle farm withdraw as an exception (decoded pool name 'modlxykLMpID')
       AND e1.args ->> 'from' <> '0x6d6f646c78796b4c4d7049440000000000000000000000000000000000000000'
+    -- handle farm withdraw as an exception (decoded pool name 'modlOmniWhLM')
+      AND e1.args ->> 'from' <> '0x6d6f646c4f6d6e6957684c4d0000000000000000000000000000000000000000'
 ),
 rn1 AS (
     SELECT *
