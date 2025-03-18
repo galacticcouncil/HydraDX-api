@@ -1,67 +1,60 @@
 -- statsChartVolume
 
-/* 
+/*
 :timeframe = hourly
-Returns 24 rows with volume in USD, one hourly for last 24 hours, last record is for last hour 
+Returns 24 rows with volume in USD, one hourly for last 24 hours, last record is for last hour
 
 :timeframe = daily
 Returns 30 rows with volume in USD, one daily for last 30d, last record is for yesterday
 */
 
-WITH CombinedQuery AS (
-  SELECT 
-    timestamp::date as "timestamp",
+WITH DailyVolume AS (
+  SELECT DISTINCT ON (timestamp::date, asset_id)
+    timestamp::date AS "timestamp",
     CASE
       WHEN :asset::text IS NOT NULL
-        THEN round(sum(volume_usd))
+        THEN round(volume_roll_24_usd)
       ELSE
-        round(sum(volume_usd)/2)
-    END as volume_usd,
-    'daily' as type
-  FROM 
-    stats_historical
-  WHERE 
-    timestamp between now() - interval '30d' and (current_date::timestamp) - interval '1 microsecond'
+        round(volume_roll_24_usd / 2)
+    END AS volume_usd,
+    'daily' AS type
+  FROM stats_historical
+  WHERE
+    timestamp BETWEEN now() - interval '30d' AND (current_date::timestamp) - interval '1 microsecond'
     AND
-     CASE
-      WHEN :asset::text IS NOT NULL
-        THEN asset_id = :asset
-      ELSE
-        true
-    END
-  GROUP BY 1
-  UNION ALL
-  SELECT 
+    (:asset::text IS NULL OR asset_id = :asset)
+)
+
+, HourlyVolume AS (
+  SELECT
     date_trunc('hour', timestamp) as "timestamp",
     CASE
       WHEN :asset::text IS NOT NULL
         THEN round(sum(volume_usd))
       ELSE
-        round(sum(volume_usd)/2)
-    END as volume_usd,
-    'hourly' as type
-  FROM 
-    stats_historical
-  WHERE 
-    timestamp between now() - interval '24h' and date_trunc('hour', now()) - interval '1 microsecond'
+        round(sum(volume_usd) / 2)
+    END AS volume_usd,
+    'hourly' AS type
+  FROM stats_historical
+  WHERE
+    timestamp BETWEEN now() - interval '24h' AND date_trunc('hour', now()) - interval '1 microsecond'
     AND
-     CASE
-      WHEN :asset::text IS NOT NULL
-        THEN asset_id = :asset
-      ELSE
-        true
-    END
+    (:asset::text IS NULL OR asset_id = :asset)
   GROUP BY 1
 )
-SELECT 
+
+SELECT
   timestamp,
-  volume_usd
-FROM 
-  CombinedQuery
+  sum(volume_usd) AS volume_usd
+FROM (
+  SELECT * FROM DailyVolume
+  UNION ALL
+  SELECT * FROM HourlyVolume
+) AS CombinedQuery
 WHERE
   type = CASE
           WHEN :timeframe = 'hourly' THEN 'hourly'
           ELSE 'daily'
          END
-ORDER BY 
-  timestamp;
+GROUP BY timestamp
+ORDER BY timestamp;
