@@ -40,11 +40,11 @@ export default async (fastify, opts) => {
     },
     handler: async (request, reply) => {
       const asset =
-        request.params.asset !== undefined && request.params.asset !== null
-          ? request.params.asset.toString()
-          : null;
+        request.params.asset == null ? "null" : request.params.asset.toString();
 
-      const sqlQuery = sqlQueries.statsTvl({ asset });
+      const sqlQuery = sqlQueries.statsTvl({
+        asset: asset === "null" ? null : asset,
+      });
 
       let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV2StatsTvl"] };
       cacheSetting.key = cacheSetting.key + "_" + asset;
