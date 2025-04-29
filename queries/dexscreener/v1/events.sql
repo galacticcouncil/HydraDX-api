@@ -2,7 +2,7 @@
 
 /*
   Returns all events within a certain range
-
+*/
 
 WITH pools AS (
     SELECT
@@ -201,6 +201,11 @@ xyk_ordered AS (
         pairId
     FROM xyk_casted
 ),
+filtered_blocks AS (
+    SELECT id, height, timestamp
+    FROM block
+    WHERE id IN (SELECT DISTINCT block_id FROM xyk_ordered)
+),
 xyk_aggr AS (
     SELECT
         block.height AS blockNumber,
@@ -221,7 +226,7 @@ xyk_aggr AS (
         asset_1_id,
         asset_2_id
     FROM xyk_ordered xyk
-    JOIN block ON xyk.block_id = block.id
+    JOIN filtered_blocks AS block ON xyk.block_id = block.id
     JOIN token_metadata_dexscreener tm ON xyk.asset_1_id = tm.id
     JOIN token_metadata_dexscreener tme ON xyk.asset_2_id = tme.id
 )
@@ -245,4 +250,3 @@ FROM xyk_aggr
 WHERE reserves_asset_0 > 0 AND reserves_asset_1 > 0 AND amount0 > 0 AND amount1 > 0
 AND blockNumber BETWEEN :fromBlock AND :toBlock
 ORDER BY blockNumber DESC;
-*/
