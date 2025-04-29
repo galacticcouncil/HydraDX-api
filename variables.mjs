@@ -114,7 +114,7 @@ export const CACHE_SETTINGS = {
   },
   dexscreenerV1Events: {
     key: "dexscreener_v1_events",
-    expire_after: 60,
+    expire_after: 10 * 60,
   },
   dexscreenerV1Latestblock: {
     key: "dexscreener_v1_latest_block",
