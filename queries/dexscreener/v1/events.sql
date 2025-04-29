@@ -2,7 +2,7 @@
 
 /*
   Returns all events within a certain range
-*/
+
 
 WITH pools AS (
     SELECT
@@ -245,3 +245,4 @@ FROM xyk_aggr
 WHERE reserves_asset_0 > 0 AND reserves_asset_1 > 0 AND amount0 > 0 AND amount1 > 0
 AND blockNumber BETWEEN :fromBlock AND :toBlock
 ORDER BY blockNumber DESC;
+*/
