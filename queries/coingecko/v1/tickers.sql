@@ -70,8 +70,6 @@ canonicalized AS (
     SELECT
         block_id,
         index_in_block,
-
-        -- Currency direction logic
         CASE
             WHEN input_symbol = 'H2O' THEN input_symbol
             WHEN output_symbol = 'H2O' THEN output_symbol
@@ -89,8 +87,6 @@ canonicalized AS (
             WHEN input_symbol < output_symbol THEN output_symbol
             ELSE input_symbol
         END AS target_currency,
-
-        -- Amounts aligned with above direction
         CASE
             WHEN input_symbol = 'H2O' THEN input_amount_normalized
             WHEN output_symbol = 'H2O' THEN output_amount_normalized
@@ -108,8 +104,6 @@ canonicalized AS (
             WHEN input_symbol < output_symbol THEN output_amount_normalized
             ELSE input_amount_normalized
         END AS target_amount,
-
-        -- Price = base / target
         (CASE
             WHEN input_symbol = 'H2O' THEN input_amount_normalized
             WHEN output_symbol = 'H2O' THEN output_amount_normalized
@@ -171,4 +165,4 @@ JOIN ohl_summary o
 JOIN volume_summary v
   ON r.base_currency = v.base_currency AND r.target_currency = v.target_currency
 WHERE r.rn = 1
-ORDER BY ticker_id
+ORDER BY ticker_id;
