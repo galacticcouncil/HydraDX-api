@@ -70,51 +70,59 @@ canonicalized AS (
     SELECT
         block_id,
         index_in_block,
-        CASE
-            WHEN input_symbol = 'H2O' THEN output_symbol
-            WHEN output_symbol = 'H2O' THEN input_symbol
-            WHEN input_symbol = 'GDOT' THEN input_symbol
-            WHEN output_symbol = 'GDOT' THEN output_symbol
-            WHEN input_symbol < output_symbol THEN input_symbol
-            ELSE output_symbol
-        END AS base_currency,
+
+        -- Currency direction logic
         CASE
             WHEN input_symbol = 'H2O' THEN input_symbol
             WHEN output_symbol = 'H2O' THEN output_symbol
             WHEN input_symbol = 'GDOT' THEN output_symbol
             WHEN output_symbol = 'GDOT' THEN input_symbol
+            WHEN input_symbol < output_symbol THEN input_symbol
+            ELSE output_symbol
+        END AS base_currency,
+
+        CASE
+            WHEN input_symbol = 'H2O' THEN output_symbol
+            WHEN output_symbol = 'H2O' THEN input_symbol
+            WHEN input_symbol = 'GDOT' THEN input_symbol
+            WHEN output_symbol = 'GDOT' THEN output_symbol
             WHEN input_symbol < output_symbol THEN output_symbol
             ELSE input_symbol
         END AS target_currency,
-        CASE
-            WHEN input_symbol = 'H2O' THEN output_amount_normalized
-            WHEN output_symbol = 'H2O' THEN input_amount_normalized
-            WHEN input_symbol = 'GDOT' THEN input_amount_normalized
-            WHEN output_symbol = 'GDOT' THEN output_amount_normalized
-            WHEN input_symbol < output_symbol THEN input_amount_normalized
-            ELSE output_amount_normalized
-        END AS base_amount,
+
+        -- Amounts aligned with above direction
         CASE
             WHEN input_symbol = 'H2O' THEN input_amount_normalized
             WHEN output_symbol = 'H2O' THEN output_amount_normalized
             WHEN input_symbol = 'GDOT' THEN output_amount_normalized
             WHEN output_symbol = 'GDOT' THEN input_amount_normalized
-            WHEN input_symbol < output_symbol THEN output_amount_normalized
-            ELSE input_amount_normalized
-        END AS target_amount,
-        (CASE
+            WHEN input_symbol < output_symbol THEN input_amount_normalized
+            ELSE output_amount_normalized
+        END AS base_amount,
+
+        CASE
             WHEN input_symbol = 'H2O' THEN output_amount_normalized
             WHEN output_symbol = 'H2O' THEN input_amount_normalized
             WHEN input_symbol = 'GDOT' THEN input_amount_normalized
             WHEN output_symbol = 'GDOT' THEN output_amount_normalized
+            WHEN input_symbol < output_symbol THEN output_amount_normalized
+            ELSE input_amount_normalized
+        END AS target_amount,
+
+        -- Price = base / target
+        (CASE
+            WHEN input_symbol = 'H2O' THEN input_amount_normalized
+            WHEN output_symbol = 'H2O' THEN output_amount_normalized
+            WHEN input_symbol = 'GDOT' THEN output_amount_normalized
+            WHEN output_symbol = 'GDOT' THEN input_amount_normalized
             WHEN input_symbol < output_symbol THEN input_amount_normalized
             ELSE output_amount_normalized
         END) /
         NULLIF((CASE
-            WHEN input_symbol = 'H2O' THEN input_amount_normalized
-            WHEN output_symbol = 'H2O' THEN output_amount_normalized
-            WHEN input_symbol = 'GDOT' THEN output_amount_normalized
-            WHEN output_symbol = 'GDOT' THEN input_amount_normalized
+            WHEN input_symbol = 'H2O' THEN output_amount_normalized
+            WHEN output_symbol = 'H2O' THEN input_amount_normalized
+            WHEN input_symbol = 'GDOT' THEN input_amount_normalized
+            WHEN output_symbol = 'GDOT' THEN output_amount_normalized
             WHEN input_symbol < output_symbol THEN output_amount_normalized
             ELSE input_amount_normalized
         END), 0) AS price
