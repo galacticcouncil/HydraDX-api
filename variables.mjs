@@ -46,7 +46,7 @@ export const CACHE_SETTINGS = {
   },
   coingeckoV1Tickers: {
     key: "coingecko_v1_tickers",
-    expire_after: 12 * 60,
+    expire_after: 10,
   },
   hydrationWebV1Stats: {
     key: "hydration-web_v1_stats",
