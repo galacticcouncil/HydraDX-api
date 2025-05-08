@@ -109,7 +109,7 @@ oa_rank AS (
   FROM
     omnipool_asset
   WHERE
-    block > (SELECT MAX(block) - 14400 /*2days*/ FROM omnipool_asset)
+    block > (SELECT MAX(block) - 14400 FROM omnipool_asset)
 ),
 hub_reserve AS (
   SELECT
