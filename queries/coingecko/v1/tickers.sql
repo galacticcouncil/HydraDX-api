@@ -171,4 +171,4 @@ JOIN ohl_summary o
 JOIN volume_summary v
   ON r.base_currency = v.base_currency AND r.target_currency = v.target_currency
 WHERE r.rn = 1
-ORDER BY ticker_id;
+ORDER BY ticker_id
