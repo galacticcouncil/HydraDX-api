@@ -1,6 +1,6 @@
 -- getTickers
 WITH relevant_blocks AS (
-    SELECT id, height
+    SELECT id
     FROM block
     WHERE timestamp > current_timestamp - interval '1 day'
 ),
@@ -120,6 +120,24 @@ canonicalized AS (
         END), 0) AS price
     FROM normalized_pairs
 ),
+ohl_summary AS (
+    SELECT
+        base_currency,
+        target_currency,
+        MAX(price) AS high,
+        MIN(price) AS low
+    FROM canonicalized
+    GROUP BY base_currency, target_currency
+),
+volume_summary AS (
+    SELECT
+        base_currency,
+        target_currency,
+        SUM(base_amount) AS base_volume,
+        SUM(target_amount) AS target_volume
+    FROM canonicalized
+    GROUP BY base_currency, target_currency
+),
 ranked AS (
     SELECT *,
            ROW_NUMBER() OVER (
@@ -129,16 +147,20 @@ ranked AS (
     FROM canonicalized
 )
 SELECT
-    base_currency || '_' || target_currency AS ticker_id,
-    base_currency,
-    target_currency,
-    ROUND(price::numeric, 12) AS last_price,
-    ROUND(base_amount::numeric, 12) AS base_volume,
-    ROUND(target_amount::numeric, 12) AS target_volume,
-    base_currency || '_' || target_currency AS pool_id,
+    r.base_currency || '_' || r.target_currency AS ticker_id,
+    r.base_currency,
+    r.target_currency,
+    ROUND(r.price::numeric, 12) AS last_price,
+    ROUND(v.base_volume::numeric, 12) AS base_volume,
+    ROUND(v.target_volume::numeric, 12) AS target_volume,
+    r.base_currency || '_' || r.target_currency AS pool_id,
     0 AS liquidity_in_usd,
-    ROUND(price::numeric, 12) AS high,
-    ROUND(price::numeric, 12) AS low
-FROM ranked
-WHERE rn = 1
+    ROUND(o.high::numeric, 12) AS high,
+    ROUND(o.low::numeric, 12) AS low
+FROM ranked r
+JOIN ohl_summary o
+  ON r.base_currency = o.base_currency AND r.target_currency = o.target_currency
+JOIN volume_summary v
+  ON r.base_currency = v.base_currency AND r.target_currency = v.target_currency
+WHERE r.rn = 1
 ORDER BY ticker_id;
