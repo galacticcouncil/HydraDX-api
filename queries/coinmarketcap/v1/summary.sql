@@ -1,4 +1,5 @@
 -- coinmarketcapSummary
+/*
 WITH omnipool_trades_all AS(
   SELECT
     substring(block_id, 4, 7):: numeric AS block,
@@ -109,7 +110,6 @@ oa_rank AS (
     omnipool_asset
   WHERE
     block > (SELECT MAX(block) - 14400 /*2days*/ FROM omnipool_asset)
-
 ),
 hub_reserve AS (
   SELECT
@@ -461,3 +461,4 @@ FROM
   left join dedup_pair_vol pv on pv.asset_ids_concat = p.asset_ids_concat
   left join perc_change pc on pc.asset_ids_concat = p.asset_ids_concat
 GROUP BY 1,2,3
+*/
