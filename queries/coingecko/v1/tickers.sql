@@ -1,79 +1,75 @@
 -- getTickers
 WITH relevant_blocks AS (
-    SELECT id
+    SELECT id, height
     FROM block
     WHERE timestamp > current_timestamp - interval '1 day'
 ),
 swaps_raw AS (
     SELECT
-        jsonb_array_elements(args -> 'inputs') AS input,
-        jsonb_array_elements(args -> 'outputs') AS output
+        e.block_id,
+        e.index_in_block,
+        jsonb_array_elements(e.args -> 'inputs') AS input,
+        jsonb_array_elements(e.args -> 'outputs') AS output
     FROM event e
     JOIN relevant_blocks b ON e.block_id = b.id
     WHERE e.name = 'Broadcast.Swapped2'
 ),
 parsed AS (
     SELECT
+        sr.block_id,
+        sr.index_in_block,
         (input ->> 'asset')::int AS input_asset_id,
         (input ->> 'amount')::numeric AS input_amount,
         (output ->> 'asset')::int AS output_asset_id,
         (output ->> 'amount')::numeric AS output_amount
-    FROM swaps_raw
+    FROM swaps_raw sr
 ),
 with_metadata AS (
     SELECT
-        tm_input.symbol AS raw_input_symbol,
-        tm_input.decimals AS input_decimals,
-        tm_output.symbol AS raw_output_symbol,
-        tm_output.decimals AS output_decimals,
+        p.block_id,
+        p.index_in_block,
         p.input_amount,
         p.output_amount,
+        CASE tm_input.symbol
+            WHEN '2-Pool-Stbl' THEN 'USDC'
+            WHEN '4-Pool' THEN 'USDT'
+            WHEN 'GDOT-Stbl' THEN 'DOT'
+            ELSE tm_input.symbol
+        END AS input_symbol,
+        CASE tm_output.symbol
+            WHEN '2-Pool-Stbl' THEN 'USDC'
+            WHEN '4-Pool' THEN 'USDT'
+            WHEN 'GDOT-Stbl' THEN 'DOT'
+            ELSE tm_output.symbol
+        END AS output_symbol,
         p.input_amount / 10^tm_input.decimals AS input_amount_normalized,
         p.output_amount / 10^tm_output.decimals AS output_amount_normalized
     FROM parsed p
     JOIN token_metadata_test_2 tm_input ON tm_input.id = p.input_asset_id
     JOIN token_metadata_test_2 tm_output ON tm_output.id = p.output_asset_id
 ),
-symbol_adjusted AS (
+normalized_pairs AS (
     SELECT
-        CASE raw_input_symbol
-            WHEN '2-Pool-Stbl' THEN 'USDC'
-            WHEN '4-Pool' THEN 'USDT'
-            WHEN 'GDOT-Stbl' THEN 'DOT'
-            ELSE raw_input_symbol
-        END AS input_symbol_mapped,
-        CASE raw_output_symbol
-            WHEN '2-Pool-Stbl' THEN 'USDC'
-            WHEN '4-Pool' THEN 'USDT'
-            WHEN 'GDOT-Stbl' THEN 'DOT'
-            ELSE raw_output_symbol
-        END AS output_symbol_mapped,
-        input_amount,
-        output_amount,
+        block_id,
+        index_in_block,
+        CASE
+            WHEN input_symbol = output_symbol AND input_symbol = 'USDC' THEN 'USDC'
+            WHEN input_symbol = output_symbol AND input_symbol = 'USDT' THEN 'USDT'
+            ELSE input_symbol
+        END AS input_symbol,
+        CASE
+            WHEN input_symbol = output_symbol AND input_symbol = 'USDC' THEN 'USDT'
+            WHEN input_symbol = output_symbol AND input_symbol = 'USDT' THEN 'USDC'
+            ELSE output_symbol
+        END AS output_symbol,
         input_amount_normalized,
         output_amount_normalized
     FROM with_metadata
 ),
-no_duplicates AS (
-    SELECT
-        CASE
-            WHEN input_symbol_mapped = output_symbol_mapped AND input_symbol_mapped = 'USDC' THEN 'USDC'
-            WHEN input_symbol_mapped = output_symbol_mapped AND input_symbol_mapped = 'USDT' THEN 'USDT'
-            ELSE input_symbol_mapped
-        END AS input_symbol,
-        CASE
-            WHEN input_symbol_mapped = output_symbol_mapped AND input_symbol_mapped = 'USDC' THEN 'USDT'
-            WHEN input_symbol_mapped = output_symbol_mapped AND input_symbol_mapped = 'USDT' THEN 'USDC'
-            ELSE output_symbol_mapped
-        END AS output_symbol,
-        input_amount,
-        output_amount,
-        input_amount_normalized,
-        output_amount_normalized
-    FROM symbol_adjusted
-),
 canonicalized AS (
     SELECT
+        block_id,
+        index_in_block,
         CASE
             WHEN input_symbol = 'H2O' THEN output_symbol
             WHEN output_symbol = 'H2O' THEN input_symbol
@@ -122,19 +118,27 @@ canonicalized AS (
             WHEN input_symbol < output_symbol THEN output_amount_normalized
             ELSE input_amount_normalized
         END), 0) AS price
-    FROM no_duplicates
+    FROM normalized_pairs
+),
+ranked AS (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY base_currency, target_currency
+               ORDER BY block_id DESC, index_in_block DESC
+           ) AS rn
+    FROM canonicalized
 )
 SELECT
     base_currency || '_' || target_currency AS ticker_id,
     base_currency,
     target_currency,
-    ROUND(AVG(price)::numeric, 12) AS last_price,
-    ROUND(SUM(base_amount)::numeric, 12) AS base_volume,
-    ROUND(SUM(target_amount)::numeric, 12) AS target_volume,
+    ROUND(price::numeric, 12) AS last_price,
+    ROUND(base_amount::numeric, 12) AS base_volume,
+    ROUND(target_amount::numeric, 12) AS target_volume,
     base_currency || '_' || target_currency AS pool_id,
     0 AS liquidity_in_usd,
-    ROUND(MAX(price)::numeric, 12) AS high,
-    ROUND(MIN(price)::numeric, 12) AS low
-FROM canonicalized
-GROUP BY base_currency, target_currency
+    ROUND(price::numeric, 12) AS high,
+    ROUND(price::numeric, 12) AS low
+FROM ranked
+WHERE rn = 1
 ORDER BY ticker_id;
