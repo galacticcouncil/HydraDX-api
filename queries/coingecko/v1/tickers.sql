@@ -45,8 +45,8 @@ with_metadata AS (
         p.input_amount / 10^tm_input.decimals AS input_amount_normalized,
         p.output_amount / 10^tm_output.decimals AS output_amount_normalized
     FROM parsed p
-    JOIN token_metadata_test_2 tm_input ON tm_input.id = p.input_asset_id
-    JOIN token_metadata_test_2 tm_output ON tm_output.id = p.output_asset_id
+    JOIN token_metadata tm_input ON tm_input.id = p.input_asset_id
+    JOIN token_metadata tm_output ON tm_output.id = p.output_asset_id
 ),
 normalized_pairs AS (
     SELECT
