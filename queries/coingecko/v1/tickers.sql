@@ -105,20 +105,20 @@ canonicalized AS (
             ELSE input_amount_normalized
         END AS target_amount,
         (CASE
-            WHEN input_symbol = 'H2O' THEN input_amount_normalized
-            WHEN output_symbol = 'H2O' THEN output_amount_normalized
-            WHEN input_symbol = 'GDOT' THEN output_amount_normalized
-            WHEN output_symbol = 'GDOT' THEN input_amount_normalized
-            WHEN input_symbol < output_symbol THEN input_amount_normalized
-            ELSE output_amount_normalized
-        END) /
-        NULLIF((CASE
             WHEN input_symbol = 'H2O' THEN output_amount_normalized
             WHEN output_symbol = 'H2O' THEN input_amount_normalized
             WHEN input_symbol = 'GDOT' THEN input_amount_normalized
             WHEN output_symbol = 'GDOT' THEN output_amount_normalized
             WHEN input_symbol < output_symbol THEN output_amount_normalized
             ELSE input_amount_normalized
+        END) /
+        NULLIF((CASE
+            WHEN input_symbol = 'H2O' THEN input_amount_normalized
+            WHEN output_symbol = 'H2O' THEN output_amount_normalized
+            WHEN input_symbol = 'GDOT' THEN output_amount_normalized
+            WHEN output_symbol = 'GDOT' THEN input_amount_normalized
+            WHEN input_symbol < output_symbol THEN input_amount_normalized
+            ELSE output_amount_normalized
         END), 0) AS price
     FROM normalized_pairs
 ),
