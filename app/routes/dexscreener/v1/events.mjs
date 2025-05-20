@@ -10,7 +10,7 @@ const sqlQueries = yesql(path.join(dirname(), "queries/dexscreener/v1/"), {
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/events",
+    url: "/events_deprecated",
     method: ["GET"],
     schema: {
       description: "Events info",
