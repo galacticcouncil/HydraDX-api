@@ -609,8 +609,8 @@ canonicalized AS (
         block_id,
         index_in_block,
         CASE
-            WHEN input_symbol = 'H2O' THEN input_symbol
-            WHEN output_symbol = 'H2O' THEN output_symbol
+            WHEN input_symbol = 'H2O' THEN output_symbol
+            WHEN output_symbol = 'H2O' THEN input_symbol
             WHEN input_symbol = 'GDOT' THEN output_symbol
             WHEN output_symbol = 'GDOT' THEN input_symbol
             WHEN input_symbol < output_symbol THEN input_symbol
@@ -618,16 +618,17 @@ canonicalized AS (
         END AS base_currency,
 
         CASE
-            WHEN input_symbol = 'H2O' THEN output_symbol
-            WHEN output_symbol = 'H2O' THEN input_symbol
+            WHEN input_symbol = 'H2O' THEN input_symbol
+            WHEN output_symbol = 'H2O' THEN output_symbol
             WHEN input_symbol = 'GDOT' THEN input_symbol
             WHEN output_symbol = 'GDOT' THEN output_symbol
             WHEN input_symbol < output_symbol THEN output_symbol
             ELSE input_symbol
         END AS target_currency,
+
         CASE
-            WHEN input_symbol = 'H2O' THEN input_amount_normalized
-            WHEN output_symbol = 'H2O' THEN output_amount_normalized
+            WHEN input_symbol = 'H2O' THEN output_amount_normalized
+            WHEN output_symbol = 'H2O' THEN input_amount_normalized
             WHEN input_symbol = 'GDOT' THEN output_amount_normalized
             WHEN output_symbol = 'GDOT' THEN input_amount_normalized
             WHEN input_symbol < output_symbol THEN input_amount_normalized
@@ -635,24 +636,25 @@ canonicalized AS (
         END AS base_amount,
 
         CASE
-            WHEN input_symbol = 'H2O' THEN output_amount_normalized
-            WHEN output_symbol = 'H2O' THEN input_amount_normalized
+            WHEN input_symbol = 'H2O' THEN input_amount_normalized
+            WHEN output_symbol = 'H2O' THEN output_amount_normalized
             WHEN input_symbol = 'GDOT' THEN input_amount_normalized
             WHEN output_symbol = 'GDOT' THEN output_amount_normalized
             WHEN input_symbol < output_symbol THEN output_amount_normalized
             ELSE input_amount_normalized
         END AS target_amount,
+
         (CASE
-            WHEN input_symbol = 'H2O' THEN input_amount_normalized
-            WHEN output_symbol = 'H2O' THEN output_amount_normalized
+            WHEN input_symbol = 'H2O' THEN output_amount_normalized
+            WHEN output_symbol = 'H2O' THEN input_amount_normalized
             WHEN input_symbol = 'GDOT' THEN output_amount_normalized
             WHEN output_symbol = 'GDOT' THEN input_amount_normalized
             WHEN input_symbol < output_symbol THEN input_amount_normalized
             ELSE output_amount_normalized
         END) /
         NULLIF((CASE
-            WHEN input_symbol = 'H2O' THEN output_amount_normalized
-            WHEN output_symbol = 'H2O' THEN input_amount_normalized
+            WHEN input_symbol = 'H2O' THEN input_amount_normalized
+            WHEN output_symbol = 'H2O' THEN output_amount_normalized
             WHEN input_symbol = 'GDOT' THEN input_amount_normalized
             WHEN output_symbol = 'GDOT' THEN output_amount_normalized
             WHEN input_symbol < output_symbol THEN output_amount_normalized
@@ -705,46 +707,46 @@ new_export as (
       ON r.base_currency = v.base_currency AND r.target_currency = v.target_currency
     WHERE r.rn = 1
     ORDER BY ticker_id),
-    final_union AS (
-      SELECT
-        p.ticker_id,
-        base_currency,
-        target_currency,
-        COALESCE(avg(last_price), 0) as last_price,
-        sum(COALESCE(base_volume, 0)) as base_volume,
-        sum(COALESCE(target_volume, 0)) as target_volume,
-        p.ticker_id as pool_id,
-        0 as liquidity_in_usd,
-        COALESCE(avg(high), 0) as high,
-        COALESCE(avg(low), 0) as low
-      FROM
-        pairs p
-        LEFT JOIN last_trades lt ON p.asset_ids_concat = lt.asset_ids_concat
-        LEFT JOIN highs h ON h.asset_ids_concat = lt.asset_ids_concat
-        LEFT JOIN lows l ON l.asset_ids_concat = lt.asset_ids_concat
-        LEFT JOIN dedup_pair_vol pv ON pv.asset_ids_concat = p.asset_ids_concat
-      GROUP BY 1,2,3,7
+final_union AS (
+    SELECT
+      p.ticker_id,
+      base_currency,
+      target_currency,
+      COALESCE(avg(last_price), 0) as last_price,
+      sum(COALESCE(base_volume, 0)) as base_volume,
+      sum(COALESCE(target_volume, 0)) as target_volume,
+      p.ticker_id as pool_id,
+      0 as liquidity_in_usd,
+      COALESCE(avg(high), 0) as high,
+      COALESCE(avg(low), 0) as low
+    FROM
+      pairs p
+      LEFT JOIN last_trades lt ON p.asset_ids_concat = lt.asset_ids_concat
+      LEFT JOIN highs h ON h.asset_ids_concat = lt.asset_ids_concat
+      LEFT JOIN lows l ON l.asset_ids_concat = lt.asset_ids_concat
+      LEFT JOIN dedup_pair_vol pv ON pv.asset_ids_concat = p.asset_ids_concat
+    GROUP BY 1,2,3,7
 
-      UNION ALL
+    UNION ALL
 
-      SELECT
-        ticker_id,
-        base_currency,
-        target_currency,
-        last_price,
-        base_volume,
-        target_volume,
-        pool_id,
-        liquidity_in_usd,
-        high,
-        low
-      FROM xyk_pools
-      WHERE rn = 1
+    SELECT
+      ticker_id,
+      base_currency,
+      target_currency,
+      last_price,
+      base_volume,
+      target_volume,
+      pool_id,
+      liquidity_in_usd,
+      high,
+      low
+    FROM xyk_pools
+    WHERE rn = 1
 
-      UNION ALL
+    UNION ALL
 
-      SELECT * FROM new_export
-    )
+    SELECT * FROM new_export
+)
 SELECT DISTINCT ON (ticker_id)
   *
 FROM final_union
