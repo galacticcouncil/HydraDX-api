@@ -61,7 +61,9 @@ export default async (fastify, opts) => {
         const priceMap = new Map();
         for (const node of priceData.assetHistoricalData.nodes) {
           const id = node.asset?.assetRegistryId;
-          const price = node.assetSpotPriceHistoricalDataByAssetInHistDataId.nodes[0]?.priceNormalised;
+          const price =
+            node.assetSpotPriceHistoricalDataByAssetInHistDataId.nodes[0]
+              ?.priceNormalised;
           if (id && price && !priceMap.has(id)) {
             priceMap.set(id, parseFloat(price));
           }
@@ -90,7 +92,10 @@ export default async (fastify, opts) => {
             const issuanceFloat = Number(issuance.toBigInt()) / 10 ** decimals;
             const tvlUsd = issuanceFloat * priceMap.get(assetId);
 
-            results.push({ asset_id: assetId, tvl_usd: Number(tvlUsd.toFixed(12)) });
+            results.push({
+              asset_id: assetId,
+              tvl_usd: Number(tvlUsd.toFixed(12)),
+            });
             if (assetId !== "1") {
               totalTvl += tvlUsd;
             }
@@ -104,7 +109,10 @@ export default async (fastify, opts) => {
         request.log.info(`Computed TVLs for ${results.length} assets.`);
         request.log.info(`Total TVL USD: ${totalTvl}`);
 
-        reply.send({ assets: results, total_tvl: Number(totalTvl.toFixed(12)) });
+        reply.send({
+          assets: results,
+          total_tvl: Number(totalTvl.toFixed(12)),
+        });
       } catch (err) {
         request.log.error("Failed to compute TVLs", err);
         return reply.status(500).send({ error: "TVL computation failed" });
