@@ -1,62 +1,114 @@
-import yesql from "yesql";
-import path from "path";
-import { dirname } from "../../../../../variables.mjs";
-import { CACHE_SETTINGS } from "../../../../../variables.mjs";
+import { gql, request as gqlRequest } from "graphql-request";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import { cachedFetch } from "../../../../../helpers/cache_helpers.mjs";
 
-const sqlQueries = yesql(path.join(dirname(), "queries/hydradx-ui/v2/stats"), {
-  type: "pg",
-});
+const GRAPHQL_ENDPOINT =
+  "https://galacticcouncil.squids.live/hydration-pools:spot-price-dev/api/graphql";
+const DECIMALS_ENDPOINT = "https://hydration.dipdup.net/api/rest/asset?id=";
+const RPC_ENDPOINT = "wss://hydration-rpc.n.dwellir.com";
 
 export default async (fastify, opts) => {
   fastify.route({
-    url: "/tvl/:asset?",
+    url: "/tvl",
     method: ["GET"],
     schema: {
-      description: "Current Omnipool TVL.",
+      description: "All asset TVLs with total, excluding asset ID 1.",
       tags: ["hydradx-ui/v2"],
-      params: {
-        type: "object",
-        properties: {
-          asset: {
-            type: "integer",
-            description: "Asset (id). Leave empty for all assets.",
-          },
-        },
-      },
       response: {
         200: {
           description: "Success Response",
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              asset_id: { type: "integer" },
-              tvl_usd: { type: "number" },
+          type: "object",
+          properties: {
+            assets: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  asset_id: { type: "string" },
+                  tvl_usd: { type: "number" },
+                },
+              },
             },
+            total_tvl: { type: "number" },
           },
         },
       },
     },
+
     handler: async (request, reply) => {
-      const asset =
-        request.params.asset == null ? "null" : request.params.asset.toString();
+      try {
+        request.log.info("Fetching asset prices...");
 
-      const sqlQuery = sqlQueries.statsTvl({
-        asset: asset === "null" ? null : asset,
-      });
+        const priceQuery = gql`
+          query {
+            assetHistoricalData(first: 1000, orderBy: PARA_BLOCK_HEIGHT_DESC) {
+              nodes {
+                asset {
+                  assetRegistryId
+                }
+                assetSpotPriceHistoricalDataByAssetInHistDataId {
+                  nodes {
+                    priceNormalised
+                  }
+                }
+              }
+            }
+          }
+        `;
 
-      let cacheSetting = { ...CACHE_SETTINGS["hydradxUiV2StatsTvl"] };
-      cacheSetting.key = cacheSetting.key + "_" + asset;
+        const priceData = await gqlRequest(GRAPHQL_ENDPOINT, priceQuery);
 
-      const result = await cachedFetch(
-        fastify.pg,
-        fastify.redis,
-        cacheSetting,
-        sqlQuery
-      );
+        const priceMap = new Map();
+        for (const node of priceData.assetHistoricalData.nodes) {
+          const id = node.asset?.assetRegistryId;
+          const price = node.assetSpotPriceHistoricalDataByAssetInHistDataId.nodes[0]?.priceNormalised;
+          if (id && price && !priceMap.has(id)) {
+            priceMap.set(id, parseFloat(price));
+          }
+        }
 
-      reply.send(JSON.parse(result));
+        const provider = new WsProvider(RPC_ENDPOINT);
+        const api = await ApiPromise.create({ provider });
+
+        const results = [];
+        let totalTvl = 0;
+
+        for (const assetId of priceMap.keys()) {
+          try {
+            const decimalRes = await fetch(`${DECIMALS_ENDPOINT}${assetId}`);
+            const decimalJson = await decimalRes.json();
+            const decimals = decimalJson.asset?.decimals;
+            if (decimals == null) continue;
+
+            let issuance;
+            if (assetId === "0") {
+              issuance = await api.query.balances.totalIssuance();
+            } else {
+              issuance = await api.query.tokens.totalIssuance(assetId);
+            }
+
+            const issuanceFloat = Number(issuance.toBigInt()) / 10 ** decimals;
+            const tvlUsd = issuanceFloat * priceMap.get(assetId);
+
+            results.push({ asset_id: assetId, tvl_usd: Number(tvlUsd.toFixed(12)) });
+            if (assetId !== "1") {
+              totalTvl += tvlUsd;
+            }
+          } catch (e) {
+            request.log.warn(`Skipping asset ${assetId}: ${e.message}`);
+          }
+        }
+
+        await api.disconnect();
+
+        request.log.info(`Computed TVLs for ${results.length} assets.`);
+        request.log.info(`Total TVL USD: ${totalTvl}`);
+
+        reply.send({ assets: results, total_tvl: Number(totalTvl.toFixed(12)) });
+      } catch (err) {
+        request.log.error("Failed to compute TVLs", err);
+        return reply.status(500).send({ error: "TVL computation failed" });
+      }
     },
   });
 };
