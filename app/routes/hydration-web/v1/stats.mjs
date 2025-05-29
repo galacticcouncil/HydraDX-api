@@ -179,7 +179,7 @@ export default async (fastify, opts) => {
           volumeAccumulator.set(
             entry.assetId,
             (volumeAccumulator.get(entry.assetId) || 0n) +
-              BigInt(entry.assetVolume)
+              BigInt(entry.assetVolume) / 2n
           );
         }
         for (const node of stableVolumeData.stableswapHistoricalVolumesByPeriod
@@ -210,7 +210,7 @@ export default async (fastify, opts) => {
           }
         }
 
-        vol30d /= 2;
+        const xcmVol30d = vol30d / 2;
 
         const provider = new WsProvider(RPC_ENDPOINT);
         const api = await ApiPromise.create({ provider });
@@ -248,7 +248,7 @@ export default async (fastify, opts) => {
         const result = {
           tvl: Number(tvl.toFixed(12)),
           vol_30d: Number(vol30d.toFixed(12)),
-          xcm_vol_30d: Number(vol30d.toFixed(12)),
+          xcm_vol_30d: Number(xcmVol30d.toFixed(12)),
           assets_count: assetsCount,
           accounts_count: accountsCount,
         };
