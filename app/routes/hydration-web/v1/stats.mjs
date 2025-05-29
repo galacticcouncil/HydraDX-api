@@ -1,6 +1,5 @@
 import { gql, request as gqlRequest } from "graphql-request";
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import fetch from "node-fetch";
 
 const DECIMALS_ENDPOINT = "https://hydration.dipdup.net/api/rest/asset?id=";
 const SPOT_PRICE_ENDPOINT =
@@ -9,8 +8,6 @@ const UNIFIED_GRAPHQL_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
 const RPC_ENDPOINT = "wss://hydration-rpc.n.dwellir.com";
 const XCM_API_ENDPOINT = "https://dev-api.ocelloids.net/query/xcm";
-const XCM_AUTH_HEADER =
-  "Bearer eyJhbGciOiJFZERTQSIsImtpZCI6IklSU1FYWXNUc0pQTm9kTTJsNURrbkJsWkJNTms2SUNvc0xBRi16dlVYX289In0.ewogICJpc3MiOiAiZGV2LWFwaS5vY2VsbG9pZHMubmV0IiwKICAianRpIjogIjAxMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwKICAic3ViIjogInB1YmxpY0BvY2VsbG9pZHMiCn0K.bjjQYsdIN9Fx34S9Of5QSKxb8_aOtwURInOGSSc_DxrdZcnYWi-5nnZsh1v5rYWuRWNzLstX0h1ICSH_oAugAQ";
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -227,7 +224,7 @@ export default async (fastify, opts) => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: XCM_AUTH_HEADER,
+              Authorization: process.env.XCM_AUTH_HEADER,
             },
             body: JSON.stringify({
               args: {
