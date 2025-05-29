@@ -23,6 +23,8 @@ spec:
                   value: cache-hydration-web-stats-job
                 - name: GOOGLE_CLOUD_RUN_JOB
                   value: "true"
+                - name: XCM_AUTH_HEADER
+                  value: $XCM_AUTH_HEADER
               resources:
                 limits:
                   cpu: "1"
