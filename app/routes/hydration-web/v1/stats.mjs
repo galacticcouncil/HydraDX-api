@@ -2,8 +2,10 @@ import { gql, request as gqlRequest } from "graphql-request";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
 const DECIMALS_ENDPOINT = "https://hydration.dipdup.net/api/rest/asset?id=";
-const SPOT_PRICE_ENDPOINT = "https://galacticcouncil.squids.live/hydration-pools:spot-price-dev/api/graphql";
-const UNIFIED_GRAPHQL_ENDPOINT = "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
+const SPOT_PRICE_ENDPOINT =
+  "https://galacticcouncil.squids.live/hydration-pools:spot-price-dev/api/graphql";
+const UNIFIED_GRAPHQL_ENDPOINT =
+  "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
 const RPC_ENDPOINT = "wss://hydration-rpc.n.dwellir.com";
 
 export default async (fastify, opts) => {
@@ -33,12 +35,49 @@ export default async (fastify, opts) => {
       try {
         request.log.info("Fetching GraphQL-based stats...");
 
-        const omnipoolAssetsQuery = gql`query { omnipoolAssets { nodes { assetId }, totalCount } }`;
-        const xykPoolsQuery = gql`query { xykpools { nodes { assetAId assetBId } } }`;
-        const stableAssetsQuery = gql`query { stableswapAssets { nodes { assetId } } }`;
-        const accountsQuery = gql`query { accounts { totalCount } }`;
+        const omnipoolAssetsQuery = gql`
+          query {
+            omnipoolAssets {
+              nodes {
+                assetId
+              }
+              totalCount
+            }
+          }
+        `;
+        const xykPoolsQuery = gql`
+          query {
+            xykpools {
+              nodes {
+                assetAId
+                assetBId
+              }
+            }
+          }
+        `;
+        const stableAssetsQuery = gql`
+          query {
+            stableswapAssets {
+              nodes {
+                assetId
+              }
+            }
+          }
+        `;
+        const accountsQuery = gql`
+          query {
+            accounts {
+              totalCount
+            }
+          }
+        `;
 
-        const [omnipoolAssetsData, xykPoolsData, stableAssetsData, accountsData] = await Promise.all([
+        const [
+          omnipoolAssetsData,
+          xykPoolsData,
+          stableAssetsData,
+          accountsData,
+        ] = await Promise.all([
           gqlRequest(UNIFIED_GRAPHQL_ENDPOINT, omnipoolAssetsQuery),
           gqlRequest(UNIFIED_GRAPHQL_ENDPOINT, xykPoolsQuery),
           gqlRequest(UNIFIED_GRAPHQL_ENDPOINT, stableAssetsQuery),
@@ -46,7 +85,7 @@ export default async (fastify, opts) => {
         ]);
 
         const omnipoolIds = new Set(
-          omnipoolAssetsData.omnipoolAssets.nodes.map(n => n.assetId)
+          omnipoolAssetsData.omnipoolAssets.nodes.map((n) => n.assetId)
         );
 
         const xykAssetIds = new Set();
@@ -56,7 +95,7 @@ export default async (fastify, opts) => {
         });
 
         const stableAssetIds = new Set(
-          stableAssetsData.stableswapAssets.nodes.map(n => n.assetId)
+          stableAssetsData.stableswapAssets.nodes.map((n) => n.assetId)
         );
 
         const allTradableAssets = new Set([
@@ -70,7 +109,9 @@ export default async (fastify, opts) => {
 
         const omnipoolVolumeQuery = gql`
           query ($assetIds: [String!]) {
-            omnipoolAssetHistoricalVolumesByPeriod(filter: {period: _1M_, assetIds: $assetIds}) {
+            omnipoolAssetHistoricalVolumesByPeriod(
+              filter: { period: _1M_, assetIds: $assetIds }
+            ) {
               nodes {
                 assetId
                 assetVolume
@@ -81,7 +122,9 @@ export default async (fastify, opts) => {
 
         const stableVolumeQuery = gql`
           query {
-            stableswapHistoricalVolumesByPeriod(filter: { period: _1M_, poolIds: ["690", "102"] }) {
+            stableswapHistoricalVolumesByPeriod(
+              filter: { period: _1M_, poolIds: ["690", "102"] }
+            ) {
               nodes {
                 poolId
                 assetVolumes {
@@ -97,37 +140,56 @@ export default async (fastify, opts) => {
           query {
             assetHistoricalData(first: 1000, orderBy: PARA_BLOCK_HEIGHT_DESC) {
               nodes {
-                asset { assetRegistryId }
+                asset {
+                  assetRegistryId
+                }
                 assetSpotPriceHistoricalDataByAssetInHistDataId {
-                  nodes { priceNormalised }
+                  nodes {
+                    priceNormalised
+                  }
                 }
               }
             }
           }
         `;
 
-        const [omnipoolVolumeData, stableVolumeData, priceData] = await Promise.all([
-          gqlRequest(UNIFIED_GRAPHQL_ENDPOINT, omnipoolVolumeQuery, { assetIds: [...omnipoolIds] }),
-          gqlRequest(UNIFIED_GRAPHQL_ENDPOINT, stableVolumeQuery),
-          gqlRequest(SPOT_PRICE_ENDPOINT, priceQuery),
-        ]);
+        const [omnipoolVolumeData, stableVolumeData, priceData] =
+          await Promise.all([
+            gqlRequest(UNIFIED_GRAPHQL_ENDPOINT, omnipoolVolumeQuery, {
+              assetIds: [...omnipoolIds],
+            }),
+            gqlRequest(UNIFIED_GRAPHQL_ENDPOINT, stableVolumeQuery),
+            gqlRequest(SPOT_PRICE_ENDPOINT, priceQuery),
+          ]);
 
         const priceMap = new Map();
         for (const node of priceData.assetHistoricalData.nodes) {
           const id = node.asset?.assetRegistryId;
-          const price = node.assetSpotPriceHistoricalDataByAssetInHistDataId.nodes[0]?.priceNormalised;
+          const price =
+            node.assetSpotPriceHistoricalDataByAssetInHistDataId.nodes[0]
+              ?.priceNormalised;
           if (id && price && !priceMap.has(id)) {
             priceMap.set(id, parseFloat(price));
           }
         }
 
         const volumeAccumulator = new Map();
-        for (const entry of omnipoolVolumeData.omnipoolAssetHistoricalVolumesByPeriod.nodes) {
-          volumeAccumulator.set(entry.assetId, (volumeAccumulator.get(entry.assetId) || 0n) + BigInt(entry.assetVolume));
+        for (const entry of omnipoolVolumeData
+          .omnipoolAssetHistoricalVolumesByPeriod.nodes) {
+          volumeAccumulator.set(
+            entry.assetId,
+            (volumeAccumulator.get(entry.assetId) || 0n) +
+              BigInt(entry.assetVolume)
+          );
         }
-        for (const node of stableVolumeData.stableswapHistoricalVolumesByPeriod.nodes) {
+        for (const node of stableVolumeData.stableswapHistoricalVolumesByPeriod
+          .nodes) {
           for (const asset of node.assetVolumes) {
-            volumeAccumulator.set(asset.assetRegistryId, (volumeAccumulator.get(asset.assetRegistryId) || 0n) + BigInt(asset.swapVolume));
+            volumeAccumulator.set(
+              asset.assetRegistryId,
+              (volumeAccumulator.get(asset.assetRegistryId) || 0n) +
+                BigInt(asset.swapVolume)
+            );
           }
         }
 
@@ -142,7 +204,9 @@ export default async (fastify, opts) => {
             const normalizedVolume = Number(rawVolume) / 10 ** decimals;
             vol30d += normalizedVolume * price;
           } catch (e) {
-            request.log.warn(`Volume normalization failed for asset ${assetId}: ${e.message}`);
+            request.log.warn(
+              `Volume normalization failed for asset ${assetId}: ${e.message}`
+            );
           }
         }
 
@@ -173,7 +237,9 @@ export default async (fastify, opts) => {
               tvl += tvlUsd;
             }
           } catch (e) {
-            request.log.warn(`TVL computation failed for asset ${assetId}: ${e.message}`);
+            request.log.warn(
+              `TVL computation failed for asset ${assetId}: ${e.message}`
+            );
           }
         }
 
