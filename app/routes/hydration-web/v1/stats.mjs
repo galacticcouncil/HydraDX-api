@@ -187,7 +187,7 @@ export default async (fastify, opts) => {
           volumeAccumulator.set(
             entry.assetId,
             (volumeAccumulator.get(entry.assetId) || 0n) +
-              BigInt(entry.assetVolume) / 2n
+              BigInt(entry.assetVolume)
           );
         }
         for (const node of stableVolumeData.stableswapHistoricalVolumesByPeriod
