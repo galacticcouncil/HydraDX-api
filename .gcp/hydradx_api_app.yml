@@ -22,8 +22,8 @@ spec:
               cpu: "1"
               memory: 512Mi
           env:
-          - name: XCM_AUTH_HEADER
-            valueFrom:
-              secretKeyRef:
-                key: '1'
-                name: XCM_AUTH_HEADER
+            - name: XCM_AUTH_HEADER
+              valueFrom:
+                secretKeyRef:
+                  key: "1"
+                  name: XCM_AUTH_HEADER
