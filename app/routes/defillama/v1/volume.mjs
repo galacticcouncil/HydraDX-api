@@ -178,7 +178,7 @@ export default async (fastify, opts) => {
             if (decimals == null || price == null) continue;
             const normalizedVolume = Number(rawVolume) / 10 ** decimals;
             const volumeUsd = normalizedVolume * price;
-            
+
             totalVolume += volumeUsd;
           } catch (e) {
             request.log.warn(
@@ -190,17 +190,19 @@ export default async (fastify, opts) => {
         // Return in the expected DefiLlama format
         const result = [{ volume_usd: Number(totalVolume.toFixed(12)) }];
 
-        request.log.info("24-hour volume response for DefiLlama: " + JSON.stringify(result));
+        request.log.info(
+          "24-hour volume response for DefiLlama: " + JSON.stringify(result)
+        );
         reply.send(result);
       } catch (err) {
         request.log.error("Failed to compute 24-hour volume for DefiLlama", {
           error: err.message,
           stack: err.stack,
-          name: err.name
+          name: err.name,
         });
-        return reply.status(500).send({ 
+        return reply.status(500).send({
           error: "24-hour volume computation failed",
-          details: err.message 
+          details: err.message,
         });
       }
     },
