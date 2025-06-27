@@ -3,7 +3,7 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 
 const DECIMALS_ENDPOINT = "https://hydration.dipdup.net/api/rest/asset?id=";
 const SPOT_PRICE_ENDPOINT =
-  "https://galacticcouncil.squids.live/hydration-pools:spot-price-dev/api/graphql";
+  "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
 const UNIFIED_GRAPHQL_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
 const RPC_ENDPOINT = "wss://hydration-rpc.n.dwellir.com";
