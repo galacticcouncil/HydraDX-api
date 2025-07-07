@@ -34,12 +34,14 @@ with_metadata AS (
             WHEN '2-Pool-Stbl' THEN 'USDC'
             WHEN '4-Pool' THEN 'USDT'
             WHEN 'GDOT-Stbl' THEN 'DOT'
+            WHEN 'GETH-Stbl' THEN 'ETH'
             ELSE tm_input.symbol
         END AS input_symbol,
         CASE tm_output.symbol
             WHEN '2-Pool-Stbl' THEN 'USDC'
             WHEN '4-Pool' THEN 'USDT'
             WHEN 'GDOT-Stbl' THEN 'DOT'
+            WHEN 'GETH-Stbl' THEN 'ETH'
             ELSE tm_output.symbol
         END AS output_symbol,
         p.input_amount / 10^tm_input.decimals AS input_amount_normalized,
@@ -75,6 +77,8 @@ canonicalized AS (
             WHEN output_symbol = 'H2O' THEN input_symbol
             WHEN input_symbol = 'GDOT' THEN output_symbol
             WHEN output_symbol = 'GDOT' THEN input_symbol
+            WHEN input_symbol = 'GETH' THEN output_symbol
+            WHEN output_symbol = 'GETH' THEN input_symbol
             WHEN input_symbol < output_symbol THEN input_symbol
             ELSE output_symbol
         END AS base_currency,
@@ -84,6 +88,8 @@ canonicalized AS (
             WHEN output_symbol = 'H2O' THEN output_symbol
             WHEN input_symbol = 'GDOT' THEN input_symbol
             WHEN output_symbol = 'GDOT' THEN output_symbol
+            WHEN input_symbol = 'GETH' THEN input_symbol
+            WHEN output_symbol = 'GETH' THEN output_symbol
             WHEN input_symbol < output_symbol THEN output_symbol
             ELSE input_symbol
         END AS target_currency,
@@ -93,6 +99,8 @@ canonicalized AS (
             WHEN output_symbol = 'H2O' THEN input_amount_normalized
             WHEN input_symbol = 'GDOT' THEN output_amount_normalized
             WHEN output_symbol = 'GDOT' THEN input_amount_normalized
+            WHEN input_symbol = 'GETH' THEN output_amount_normalized
+            WHEN output_symbol = 'GETH' THEN input_amount_normalized
             WHEN input_symbol < output_symbol THEN input_amount_normalized
             ELSE output_amount_normalized
         END AS base_amount,
@@ -102,6 +110,8 @@ canonicalized AS (
             WHEN output_symbol = 'H2O' THEN output_amount_normalized
             WHEN input_symbol = 'GDOT' THEN input_amount_normalized
             WHEN output_symbol = 'GDOT' THEN output_amount_normalized
+            WHEN input_symbol = 'GETH' THEN input_amount_normalized
+            WHEN output_symbol = 'GETH' THEN output_amount_normalized
             WHEN input_symbol < output_symbol THEN output_amount_normalized
             ELSE input_amount_normalized
         END AS target_amount,
@@ -111,6 +121,8 @@ canonicalized AS (
             WHEN output_symbol = 'H2O' THEN input_amount_normalized
             WHEN input_symbol = 'GDOT' THEN output_amount_normalized
             WHEN output_symbol = 'GDOT' THEN input_amount_normalized
+            WHEN input_symbol = 'GETH' THEN output_amount_normalized
+            WHEN output_symbol = 'GETH' THEN input_amount_normalized
             WHEN input_symbol < output_symbol THEN input_amount_normalized
             ELSE output_amount_normalized
         END) /
@@ -119,6 +131,8 @@ canonicalized AS (
             WHEN output_symbol = 'H2O' THEN output_amount_normalized
             WHEN input_symbol = 'GDOT' THEN input_amount_normalized
             WHEN output_symbol = 'GDOT' THEN output_amount_normalized
+            WHEN input_symbol = 'GETH' THEN input_amount_normalized
+            WHEN output_symbol = 'GETH' THEN output_amount_normalized
             WHEN input_symbol < output_symbol THEN output_amount_normalized
             ELSE input_amount_normalized
         END), 0) AS price
