@@ -255,7 +255,8 @@ export default async (fastify, opts) => {
         }
 
         // Get TVL from the new GraphQL query
-        const tvl = tvlData.platformTotalTvl.nodes[0]?.totalTvlDecoratedNorm || 0;
+        const tvl =
+          tvlData.platformTotalTvl.nodes[0]?.totalTvlDecoratedNorm || 0;
 
         const result = {
           tvl: Number(tvl),
