@@ -1,13 +1,11 @@
 import { gql, request as gqlRequest } from "graphql-request";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 
-const DECIMALS_ENDPOINT = "https://hydration.dipdup.net/api/rest/asset?id=";
 const SPOT_PRICE_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
 const UNIFIED_GRAPHQL_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
-const RPC_ENDPOINT = "wss://hydration-rpc.n.dwellir.com";
 const XCM_API_ENDPOINT = "https://dev-api.ocelloids.net/query/xcm";
+const DECIMALS_ENDPOINT = "https://hydration.dipdup.net/api/rest/asset?id=";
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -39,6 +37,7 @@ export default async (fastify, opts) => {
           xykPoolsData,
           stableAssetsData,
           accountsData,
+          tvlData,
         ] = await Promise.all([
           gqlRequest(
             UNIFIED_GRAPHQL_ENDPOINT,
@@ -84,6 +83,18 @@ export default async (fastify, opts) => {
               {
                 accounts {
                   totalCount
+                }
+              }
+            `
+          ),
+          gqlRequest(
+            SPOT_PRICE_ENDPOINT,
+            gql`
+              {
+                platformTotalTvl {
+                  nodes {
+                    totalTvlDecoratedNorm
+                  }
                 }
               }
             `
@@ -243,38 +254,11 @@ export default async (fastify, opts) => {
           request.log.warn("Failed to fetch xcm volume", e);
         }
 
-        const provider = new WsProvider(RPC_ENDPOINT);
-        const api = await ApiPromise.create({ provider });
-
-        let tvl = 0;
-        for (const assetId of priceMap.keys()) {
-          try {
-            const decimalRes = await fetch(`${DECIMALS_ENDPOINT}${assetId}`);
-            const decimalJson = await decimalRes.json();
-            const decimals = decimalJson.asset?.decimals;
-            if (decimals == null) continue;
-
-            let issuance;
-            if (assetId === "0") {
-              issuance = await api.query.balances.totalIssuance();
-            } else {
-              issuance = await api.query.tokens.totalIssuance(assetId);
-            }
-
-            const issuanceFloat = Number(issuance.toBigInt()) / 10 ** decimals;
-            const tvlUsd = issuanceFloat * priceMap.get(assetId);
-            if (assetId !== "1") tvl += tvlUsd;
-          } catch (e) {
-            request.log.warn(
-              `TVL computation failed for asset ${assetId}: ${e.message}`
-            );
-          }
-        }
-
-        await api.disconnect();
+        // Get TVL from the new GraphQL query
+        const tvl = tvlData.platformTotalTvl.nodes[0]?.totalTvlDecoratedNorm || 0;
 
         const result = {
-          tvl: Number(tvl.toFixed(12)),
+          tvl: Number(tvl),
           vol_30d: Number(vol30d.toFixed(12)),
           xcm_vol_30d: Number(xcmVol30d.toFixed(12)),
           assets_count: assetsCount,
