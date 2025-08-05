@@ -1,14 +1,15 @@
 import { gql, request as gqlRequest } from "graphql-request";
 import { CACHE_SETTINGS } from "../../../../variables.mjs";
 
-const GRAPHQL_ENDPOINT = "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
+const GRAPHQL_ENDPOINT =
+  "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
 
 async function fetchVolumeFromGraphQL() {
   const data = await gqlRequest(
     GRAPHQL_ENDPOINT,
     gql`
       {
-        platformTotalVolumesByPeriod(filter: {period: _24H_}) {
+        platformTotalVolumesByPeriod(filter: { period: _24H_ }) {
           nodes {
             totalVolNorm
             omnipoolVolNorm
@@ -23,7 +24,7 @@ async function fetchVolumeFromGraphQL() {
       }
     `
   );
-  
+
   return data.platformTotalVolumesByPeriod.nodes[0];
 }
 
@@ -58,11 +59,13 @@ export default async (fastify, opts) => {
 
         // Fetch from GraphQL
         const volumeData = await fetchVolumeFromGraphQL();
-        
+
         // Format response to maintain original format - array with single object
-        const response = [{
-          volume_usd: parseFloat(volumeData.totalVolNorm)
-        }];
+        const response = [
+          {
+            volume_usd: parseFloat(volumeData.totalVolNorm),
+          },
+        ];
 
         // Cache the result using the correct expire_after setting
         await fastify.redis.set(cacheSetting.key, JSON.stringify(response));
