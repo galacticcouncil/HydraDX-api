@@ -5,7 +5,6 @@ const SPOT_PRICE_ENDPOINT =
 const UNIFIED_GRAPHQL_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
 const XCM_API_ENDPOINT = "https://dev-api.ocelloids.net/query/xcm";
-const DECIMALS_ENDPOINT = "https://hydration.dipdup.net/api/rest/asset?id=";
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -38,6 +37,7 @@ export default async (fastify, opts) => {
           stableAssetsData,
           accountsData,
           tvlData,
+          volumeData,
         ] = await Promise.all([
           gqlRequest(
             UNIFIED_GRAPHQL_ENDPOINT,
@@ -99,6 +99,18 @@ export default async (fastify, opts) => {
               }
             `
           ),
+          gqlRequest(
+            SPOT_PRICE_ENDPOINT,
+            gql`
+              {
+                platformTotalVolumesByPeriod(filter: { period: _30D_ }) {
+                  nodes {
+                    totalVolNorm
+                  }
+                }
+              }
+            `
+          ),
         ]);
 
         const omnipoolIds = new Set(
@@ -121,113 +133,10 @@ export default async (fastify, opts) => {
         const assetsCount = allTradableAssets.size;
         const accountsCount = accountsData.accounts.totalCount;
 
-        const [omnipoolVolumeData, stableVolumeData, priceData] =
-          await Promise.all([
-            gqlRequest(
-              UNIFIED_GRAPHQL_ENDPOINT,
-              gql`
-                query ($assetIds: [String!]) {
-                  omnipoolAssetHistoricalVolumesByPeriod(
-                    filter: { period: _1M_, assetIds: $assetIds }
-                  ) {
-                    nodes {
-                      assetId
-                      assetVolume
-                    }
-                  }
-                }
-              `,
-              { assetIds: [...omnipoolIds] }
-            ),
-            gqlRequest(
-              UNIFIED_GRAPHQL_ENDPOINT,
-              gql`
-                query {
-                  stableswapHistoricalVolumesByPeriod(
-                    filter: { period: _1M_, poolIds: ["690", "102"] }
-                  ) {
-                    nodes {
-                      poolId
-                      assetVolumes {
-                        assetRegistryId
-                        swapVolume
-                      }
-                    }
-                  }
-                }
-              `
-            ),
-            gqlRequest(
-              SPOT_PRICE_ENDPOINT,
-              gql`
-                query {
-                  assetHistoricalData(
-                    first: 1000
-                    orderBy: PARA_BLOCK_HEIGHT_DESC
-                  ) {
-                    nodes {
-                      asset {
-                        assetRegistryId
-                      }
-                      assetSpotPriceHistoricalDataByAssetInHistDataId {
-                        nodes {
-                          priceNormalised
-                        }
-                      }
-                    }
-                  }
-                }
-              `
-            ),
-          ]);
-
-        const priceMap = new Map();
-        for (const node of priceData.assetHistoricalData.nodes) {
-          const id = node.asset?.assetRegistryId;
-          const price =
-            node.assetSpotPriceHistoricalDataByAssetInHistDataId.nodes[0]
-              ?.priceNormalised;
-          if (id && price && !priceMap.has(id)) {
-            priceMap.set(id, parseFloat(price));
-          }
-        }
-
-        const volumeAccumulator = new Map();
-        for (const entry of omnipoolVolumeData
-          .omnipoolAssetHistoricalVolumesByPeriod.nodes) {
-          volumeAccumulator.set(
-            entry.assetId,
-            (volumeAccumulator.get(entry.assetId) || 0n) +
-              BigInt(entry.assetVolume)
-          );
-        }
-        for (const node of stableVolumeData.stableswapHistoricalVolumesByPeriod
-          .nodes) {
-          for (const asset of node.assetVolumes) {
-            volumeAccumulator.set(
-              asset.assetRegistryId,
-              (volumeAccumulator.get(asset.assetRegistryId) || 0n) +
-                BigInt(asset.swapVolume)
-            );
-          }
-        }
-
-        let vol30d = 0;
-        for (const [assetId, rawVolume] of volumeAccumulator.entries()) {
-          try {
-            const decimalRes = await fetch(`${DECIMALS_ENDPOINT}${assetId}`);
-            const decimalJson = await decimalRes.json();
-            const decimals = decimalJson.asset?.decimals;
-            const price = priceMap.get(assetId);
-            if (decimals == null || price == null) continue;
-            const normalizedVolume = Number(rawVolume) / 10 ** decimals;
-            vol30d += normalizedVolume * price;
-          } catch (e) {
-            request.log.warn(
-              `Volume normalization failed for asset ${assetId}: ${e.message}`
-            );
-          }
-        }
+        // Get 30-day volume from the new GraphQL query
+        const vol30d = Number(
+          volumeData.platformTotalVolumesByPeriod.nodes[0]?.totalVolNorm || 0
+        );
 
         let xcmVol30d = 0;
         try {
@@ -260,7 +169,7 @@ export default async (fastify, opts) => {
 
         const result = {
           tvl: Number(tvl),
-          vol_30d: Number(vol30d.toFixed(12)),
+          vol_30d: vol30d,
           xcm_vol_30d: Number(xcmVol30d.toFixed(12)),
           assets_count: assetsCount,
           accounts_count: accountsCount,
