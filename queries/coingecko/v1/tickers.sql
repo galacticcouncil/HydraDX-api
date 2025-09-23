@@ -32,16 +32,32 @@ with_metadata AS (
         p.output_amount,
         CASE tm_input.symbol
             WHEN '2-Pool-Stbl' THEN 'USDC'
+            WHEN '2-Pool-HUSDC' THEN 'USDC'
+            WHEN '2-Pool-HUSDe' THEN 'sUSDe'
+            WHEN '2-Pool-HUSDS' THEN 'SUSDS'
+            WHEN '2-Pool-HUSDT' THEN 'USDT'
             WHEN '4-Pool' THEN 'USDT'
             WHEN 'GDOT-Stbl' THEN 'DOT'
             WHEN 'GETH-Stbl' THEN 'ETH'
+            WHEN 'HUSDT' THEN 'HOLLAR'
+            WHEN 'HUSDe' THEN 'HOLLAR'
+            WHEN 'HUSDS' THEN 'HOLLAR'
+            WHEN 'HUSDC' THEN 'HOLLAR'
             ELSE tm_input.symbol
         END AS input_symbol,
         CASE tm_output.symbol
             WHEN '2-Pool-Stbl' THEN 'USDC'
+            WHEN '2-Pool-HUSDC' THEN 'USDC'
+            WHEN '2-Pool-HUSDe' THEN 'sUSDe'
+            WHEN '2-Pool-HUSDS' THEN 'SUSDS'
+            WHEN '2-Pool-HUSDT' THEN 'USDT'
             WHEN '4-Pool' THEN 'USDT'
             WHEN 'GDOT-Stbl' THEN 'DOT'
             WHEN 'GETH-Stbl' THEN 'ETH'
+            WHEN 'HUSDT' THEN 'HOLLAR'
+            WHEN 'HUSDe' THEN 'HOLLAR'
+            WHEN 'HUSDS' THEN 'HOLLAR'
+            WHEN 'HUSDC' THEN 'HOLLAR'
             ELSE tm_output.symbol
         END AS output_symbol,
         p.input_amount / 10^tm_input.decimals AS input_amount_normalized,
