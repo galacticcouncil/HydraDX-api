@@ -33,7 +33,7 @@ with_metadata AS (
         CASE tm_input.symbol
             WHEN '2-Pool-Stbl' THEN 'USDC'
             WHEN '2-Pool-HUSDC' THEN 'USDC'
-            WHEN '2-Pool-HUSDe' THEN 'sUSDe'
+            --WHEN '2-Pool-HUSDe' THEN 'sUSDe'
             WHEN '2-Pool-HUSDS' THEN 'SUSDS'
             WHEN '2-Pool-HUSDT' THEN 'USDT'
             WHEN '4-Pool' THEN 'USDT'
@@ -48,7 +48,7 @@ with_metadata AS (
         CASE tm_output.symbol
             WHEN '2-Pool-Stbl' THEN 'USDC'
             WHEN '2-Pool-HUSDC' THEN 'USDC'
-            WHEN '2-Pool-HUSDe' THEN 'sUSDe'
+            --WHEN '2-Pool-HUSDe' THEN 'sUSDe'
             WHEN '2-Pool-HUSDS' THEN 'SUSDS'
             WHEN '2-Pool-HUSDT' THEN 'USDT'
             WHEN '4-Pool' THEN 'USDT'
