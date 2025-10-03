@@ -1,8 +1,3 @@
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
-
 const RPC_URL = "https://rpc.parm.hydration.cloud";
 
 // Token contract addresses mapping
@@ -16,6 +11,38 @@ const TOKEN_DECIMALS = {
   hollar: 18,
   // Add more tokens here as needed
 };
+
+// ERC20 totalSupply function signature
+const TOTAL_SUPPLY_SIGNATURE = "0x18160ddd";
+
+async function callTotalSupply(contractAddress) {
+  const response = await fetch(RPC_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "eth_call",
+      params: [
+        {
+          to: contractAddress,
+          data: TOTAL_SUPPLY_SIGNATURE,
+        },
+        "latest",
+      ],
+      id: 1,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(data.error.message || "RPC call failed");
+  }
+
+  return data.result;
+}
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -61,12 +88,8 @@ export default async (fastify, opts) => {
       const decimals = TOKEN_DECIMALS[token];
 
       try {
-        // Execute cast call command
-        const command = `cast call -r ${RPC_URL} ${contractAddress} 'totalSupply()'`;
-        const { stdout } = await execAsync(command);
-
-        // Parse the hex result
-        const hexValue = stdout.trim();
+        // Call the contract via JSON-RPC
+        const hexValue = await callTotalSupply(contractAddress);
 
         // Convert hex to BigInt
         const rawSupply = BigInt(hexValue);
