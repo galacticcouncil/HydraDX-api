@@ -67,7 +67,7 @@ export default async (fastify, opts) => {
 
         // Parse the hex result
         const hexValue = stdout.trim();
-        
+
         // Convert hex to BigInt
         const rawSupply = BigInt(hexValue);
 
