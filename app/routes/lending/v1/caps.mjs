@@ -125,7 +125,7 @@ async function fetchHollarData() {
   const available = capacity - currentBorrow;
 
   return {
-    asset: "HOLLAR",
+    asset: "Hydrated Dollar",
     borrowCap: capacity,
     currentBorrow: currentBorrow,
     available: available,
