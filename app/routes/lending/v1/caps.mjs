@@ -22,10 +22,10 @@ function normalize(value, decimals) {
   const divisor = BigInt(10 ** decimals);
   const integerPart = bigValue / divisor;
   const remainder = bigValue % divisor;
-  
+
   // Format the decimal part with proper padding
   const decimalPart = remainder.toString().padStart(decimals, "0");
-  
+
   // Combine and convert to number
   return parseFloat(`${integerPart}.${decimalPart}`);
 }
@@ -89,7 +89,7 @@ async function fetchHollarBorrowCap() {
   );
 
   const node = data.aaveFacilitatorHistoricalData.nodes[0];
-  
+
   if (!node) {
     throw new Error("No Hollar borrow cap data found");
   }
@@ -104,10 +104,10 @@ async function fetchHollarBorrowCap() {
 async function fetchHollarCurrentBorrow() {
   // Call the variable debt token contract via JSON-RPC
   const hexValue = await callTotalSupply(HOLLAR_VARIABLE_DEBT_TOKEN);
-  
+
   // Convert hex to BigInt and normalize
   const rawSupply = BigInt(hexValue);
-  
+
   return normalize(rawSupply, HOLLAR_DECIMALS);
 }
 
@@ -140,11 +140,11 @@ async function fetchHollarData() {
 async function fetchCapsData() {
   // Fetch Hollar data
   const hollarData = await fetchHollarData();
-  
+
   // TODO: Add other assets from mmReserveConfigHistoricalData
   // This structure allows easy extension with additional assets
   const assets = [hollarData];
-  
+
   return assets;
 }
 
@@ -153,7 +153,8 @@ export default async (fastify, opts) => {
     url: "/caps",
     method: ["GET"],
     schema: {
-      description: "Borrow caps and current borrow levels for money market assets",
+      description:
+        "Borrow caps and current borrow levels for money market assets",
       tags: ["lending/v1"],
       response: {
         200: {
@@ -162,21 +163,21 @@ export default async (fastify, opts) => {
           items: {
             type: "object",
             properties: {
-              asset: { 
+              asset: {
                 type: "string",
-                description: "Asset name"
+                description: "Asset name",
               },
-              borrowCap: { 
+              borrowCap: {
                 type: "number",
-                description: "Maximum borrow capacity"
+                description: "Maximum borrow capacity",
               },
-              currentBorrow: { 
+              currentBorrow: {
                 type: "number",
-                description: "Current borrow level"
+                description: "Current borrow level",
               },
-              available: { 
+              available: {
                 type: "number",
-                description: "Available capacity (borrowCap - currentBorrow)"
+                description: "Available capacity (borrowCap - currentBorrow)",
               },
             },
           },
@@ -203,9 +204,9 @@ export default async (fastify, opts) => {
         reply.send(capsData);
       } catch (error) {
         fastify.log.error(error);
-        reply.code(500).send({ 
+        reply.code(500).send({
           error: "Failed to fetch lending caps data",
-          message: error.message 
+          message: error.message,
         });
       }
     },
