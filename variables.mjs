@@ -124,4 +124,8 @@ export const CACHE_SETTINGS = {
     key: "dexscreener_v1_pair",
     expire_after: 60,
   },
+  lendingV1Caps: {
+    key: "lending_v1_caps",
+    expire_after: 60,
+  },
 };
