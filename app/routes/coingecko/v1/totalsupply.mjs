@@ -3,12 +3,16 @@ const RPC_URL = "https://rpc.parm.hydration.cloud";
 // Token contract addresses mapping
 const TOKEN_CONTRACTS = {
   hollar: "0x531a654d1696ED52e7275A8cede955E82620f99a",
+  gigadot: "0x34d5ffb83d14d82f87aaf2f13be895a3c814c2ad",
+  gigaeth: "0x8a598fe3e3a471ce865332e330d303502a0e2f52",
   // Add more tokens here as needed
 };
 
 // Token decimals mapping
 const TOKEN_DECIMALS = {
   hollar: 18,
+  gigadot: 18,
+  gigaeth: 18,
   // Add more tokens here as needed
 };
 
