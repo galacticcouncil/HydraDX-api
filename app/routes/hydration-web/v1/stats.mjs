@@ -4,7 +4,7 @@ const SPOT_PRICE_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
 const UNIFIED_GRAPHQL_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
-const XCM_API_ENDPOINT = "https://dev-api.ocelloids.net/query/xcm";
+const XCM_API_ENDPOINT = "https://api.ocelloids.net/query/xcm";
 
 export default async (fastify, opts) => {
   fastify.route({
