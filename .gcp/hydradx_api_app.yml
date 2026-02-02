@@ -25,5 +25,5 @@ spec:
             - name: XCM_AUTH_HEADER
               valueFrom:
                 secretKeyRef:
-                  key: "1"
+                  key: "latest"
                   name: XCM_AUTH_HEADER
