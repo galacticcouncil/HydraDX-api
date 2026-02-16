@@ -16,6 +16,9 @@ async function fetchBackfillVolumeFromGraphQL(startBlock, endBlock) {
         platformTotalVolumesByPeriod(filter: { startBlockNumber: ${startBlock}, endBlockNumber: ${endBlock} }) {
           nodes {
             totalVolNorm
+            omnipoolFeeVolNorm
+            stableswapFeeVolNorm
+            xykpoolFeeVolNorm
             paraBlockHeight
           }
         }
@@ -150,6 +153,10 @@ export default async (fastify, opts) => {
         // Format response
         const response = volumeData.map((item) => ({
           volume_usd: parseFloat(item.totalVolNorm),
+          fees_usd:
+            parseFloat(item.omnipoolFeeVolNorm || 0) +
+            parseFloat(item.stableswapFeeVolNorm || 0) +
+            parseFloat(item.xykpoolFeeVolNorm || 0),
         }));
 
         reply.send(response);
