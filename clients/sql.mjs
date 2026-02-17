@@ -14,7 +14,9 @@ export async function newOrcaSqlClient() {
     user: orcaSqlUser(),
     password: orcaSqlPass(),
     database: orcaSqlDatabase(),
-    max: 500,
+    max: 1,
+    min: 0,
+    idleTimeoutMillis: 30000,
   });
 
   const client = await pool.connect();
