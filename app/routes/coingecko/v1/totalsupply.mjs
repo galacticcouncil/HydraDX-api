@@ -1,4 +1,4 @@
-const RPC_URL = "https://rpc.parm.hydration.cloud";
+const RPC_URL = "https://hydration-rpc.n.dwellir.com";
 
 // Token contract addresses mapping
 const TOKEN_CONTRACTS = {

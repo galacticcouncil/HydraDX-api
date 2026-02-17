@@ -1,7 +1,8 @@
 import { gql, request as gqlRequest } from "graphql-request";
+import { CACHE_SETTINGS } from "../../../../variables.mjs";
 
 const SPOT_PRICE_ENDPOINT =
-  "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
+  "https://galacticcouncil.squids.live/hydration-pools:orca-prod/api/graphql";
 const UNIFIED_GRAPHQL_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
 const XCM_API_ENDPOINT = "https://api.ocelloids.net/query/xcm";
@@ -31,6 +32,13 @@ export default async (fastify, opts) => {
       request.log.info("Starting stats handler");
 
       try {
+        const cacheSetting = CACHE_SETTINGS["hydrationWebV1Stats"];
+        const cachedResult = await fastify.redis.get(cacheSetting.key);
+        if (cachedResult) {
+          request.log.info("Returning cached stats");
+          return reply.send(JSON.parse(cachedResult));
+        }
+
         const [
           omnipoolAssetsData,
           xykPoolsData,
@@ -133,18 +141,20 @@ export default async (fastify, opts) => {
         const assetsCount = allTradableAssets.size;
         const accountsCount = accountsData.accounts.totalCount;
 
-        // Get 30-day volume from the new GraphQL query
         const vol30d = Number(
           volumeData.platformTotalVolumesByPeriod.nodes[0]?.totalVolNorm || 0
         );
 
         let xcmVol30d = 0;
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+
           const xcmRes = await fetch(XCM_API_ENDPOINT, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: process.env.XCM_AUTH_HEADER,
+              Authorization: `Bearer ${process.env.XCM_AUTH_HEADER}`,
             },
             body: JSON.stringify({
               args: {
@@ -152,8 +162,10 @@ export default async (fastify, opts) => {
                 criteria: { timeframe: "1 months" },
               },
             }),
+            signal: controller.signal,
           });
 
+          clearTimeout(timeoutId);
           const json = await xcmRes.json();
           const hydration = json.items?.find(
             (x) => x.network === "urn:ocn:polkadot:2034"
@@ -163,7 +175,6 @@ export default async (fastify, opts) => {
           request.log.warn("Failed to fetch xcm volume", e);
         }
 
-        // Get TVL from the new GraphQL query
         const tvl =
           tvlData.platformTotalTvl.nodes[0]?.totalTvlDecoratedNorm || 0;
 
@@ -174,6 +185,9 @@ export default async (fastify, opts) => {
           assets_count: assetsCount,
           accounts_count: accountsCount,
         };
+
+        await fastify.redis.set(cacheSetting.key, JSON.stringify(result));
+        await fastify.redis.expire(cacheSetting.key, cacheSetting.expire_after);
 
         request.log.info("Final stats response: " + JSON.stringify(result));
         reply.send(result);

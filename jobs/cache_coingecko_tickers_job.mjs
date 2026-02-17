@@ -14,6 +14,4 @@ export async function cacheCoingeckoTickersJob(sqlClient, redisClient) {
     CACHE_SETTINGS["coingeckoV1Tickers"],
     sqlQueries.getTickers()
   );
-
-  return true;
 }

@@ -1,11 +1,4 @@
-import yesql from "yesql";
-import path from "path";
-import { dirname, CACHE_SETTINGS } from "../../../../variables.mjs";
-import { cachedFetch } from "../../../../helpers/cache_helpers.mjs";
-
-const sqlQueries = yesql(path.join(dirname(), "queries/coingecko/v1/"), {
-  type: "pg",
-});
+import { CACHE_SETTINGS } from "../../../../variables.mjs";
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -40,14 +33,17 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       let cacheSetting = CACHE_SETTINGS["coingeckoV1Tickers"];
 
-      const result = await cachedFetch(
-        fastify.pg,
-        fastify.redis,
-        cacheSetting,
-        sqlQueries.getTickers()
-      );
+      // Read from cache (populated by cache_coingecko_tickers_job)
+      const cachedResult = await fastify.redis.get(cacheSetting.key);
 
-      reply.send(JSON.parse(result));
+      if (cachedResult) {
+        reply.send(JSON.parse(cachedResult));
+      } else {
+        reply.code(503).send({
+          error: "Cache not populated",
+          message: "Please wait for the cache job to populate data",
+        });
+      }
     },
   });
 };

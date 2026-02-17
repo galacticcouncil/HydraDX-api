@@ -2,7 +2,7 @@ import { gql, request as gqlRequest } from "graphql-request";
 import { CACHE_SETTINGS } from "../../../../variables.mjs";
 
 const GRAPHQL_ENDPOINT =
-  "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
+  "https://galacticcouncil.squids.live/hydration-pools:orca-prod/api/graphql";
 
 async function fetchVolumeFromGraphQL() {
   const data = await gqlRequest(

@@ -5,11 +5,7 @@ const { JOB_NAME, CONTINUOUS_JOB } = process.env;
 
 import { JOBS } from "./variables.mjs";
 import { cacheCoingeckoTickersJob } from "./jobs/cache_coingecko_tickers_job.mjs";
-import { cacheHydrationWebStatsJob } from "./jobs/cache_hydration-web_stats_job.mjs";
-import { cacheHydradxUiStatsTvlJob } from "./jobs/cache_hydradx-ui_stats_tvl_job.mjs";
-import { cacheHydradxUiV2StatsVolumeJob } from "./jobs/cache_hydradx-ui_v2_stats_volume_job.mjs";
-import { cacheCoinmarketcapSummaryJob } from "./jobs/cache_coinmarketcap_summary_job.mjs";
-import { newSqlClient, newOrcaSqlClient } from "./clients/sql.mjs";
+import { newOrcaSqlClient } from "./clients/sql.mjs";
 import { newRedisClient } from "./clients/redis.mjs";
 
 const main = async () => {
@@ -30,29 +26,12 @@ const main = async () => {
 async function executeJob(job_name) {
   console.log(`Executing ${job_name}..`);
 
-  const sqlClient = await newSqlClient();
   const orcaSqlClient = await newOrcaSqlClient();
   const redisClient = await newRedisClient();
 
   switch (job_name) {
     case JOBS["cacheCoingeckoTickersJob"]: {
       await cacheCoingeckoTickersJob(orcaSqlClient, redisClient);
-      break;
-    }
-    case JOBS["cacheHydrationWebStatsJob"]: {
-      await cacheHydrationWebStatsJob(sqlClient, redisClient);
-      break;
-    }
-    case JOBS["cacheHydradxUiStatsTvlJob"]: {
-      await cacheHydradxUiStatsTvlJob(sqlClient, redisClient);
-      break;
-    }
-    case JOBS["cacheHydradxUiV2StatsVolumeJob"]: {
-      await cacheHydradxUiV2StatsVolumeJob(sqlClient, redisClient);
-      break;
-    }
-    case JOBS["cacheCoinmarketcapSummaryJob"]: {
-      await cacheCoinmarketcapSummaryJob(sqlClient, redisClient);
       break;
     }
     default: {
@@ -65,7 +44,7 @@ async function executeJob(job_name) {
   if (CONTINUOUS_JOB == "true") {
     return executeJob(job_name);
   } else {
-    await sqlClient.release();
+    await orcaSqlClient.release();
     await redisClient.disconnect();
 
     return true;

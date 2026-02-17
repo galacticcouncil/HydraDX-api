@@ -8,8 +8,8 @@ swaps_raw AS (
     SELECT
         e.block_id,
         e.index_in_block,
-        jsonb_array_elements(e.args -> 'inputs') AS input,
-        jsonb_array_elements(e.args -> 'outputs') AS output
+        jsonb_array_elements(e.args::jsonb -> 'inputs') AS input,
+        jsonb_array_elements(e.args::jsonb -> 'outputs') AS output
     FROM event e
     JOIN relevant_blocks b ON e.block_id = b.id
     WHERE e.name = 'Broadcast.Swapped3'

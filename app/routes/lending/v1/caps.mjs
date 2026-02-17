@@ -2,8 +2,8 @@ import { gql, request as gqlRequest } from "graphql-request";
 import { CACHE_SETTINGS } from "../../../../variables.mjs";
 
 const GRAPHQL_ENDPOINT =
-  "https://galacticcouncil.squids.live/hydration-pools:whale-prod/api/graphql";
-const RPC_URL = "https://rpc.parm.hydration.cloud";
+  "https://galacticcouncil.squids.live/hydration-pools:orca-prod/api/graphql";
+const RPC_URL = "https://hydration-rpc.n.dwellir.com";
 
 const HOLLAR_DECIMALS = 18;
 const HOLLAR_VARIABLE_DEBT_TOKEN = "0x342923782ccaebf9c38dd9cb40436e82c42c73b5";
