@@ -23,6 +23,11 @@ spec:
                   value: cache-coingecko-tickers-job
                 - name: GOOGLE_CLOUD_RUN_JOB
                   value: "true"
+                - name: PGPASSWORD_DB_ORCA
+                  valueFrom:
+                    secretKeyRef:
+                      key: "latest"
+                      name: PGPASSWORD_DB_ORCA
               resources:
                 limits:
                   cpu: "1"
