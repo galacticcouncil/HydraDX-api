@@ -90,5 +90,8 @@ jobs:
       - name: execute cache_coingecko_tickers_job
         run: gcloud run jobs execute cache-coingecko-tickers-job --region europe-west3 --wait
 
+      - name: deploy cache_coingecko_tickers_scheduler
+        run: gcloud scheduler jobs update http cache-coingecko-tickers-scheduler --location=europe-west3 --schedule="*/10 * * * *" --uri="https://europe-west3-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/rich-principle-383410/jobs/cache-coingecko-tickers-job:run" --http-method=POST --oidc-service-account-email=rich-principle-383410@appspot.gserviceaccount.com || gcloud scheduler jobs create http cache-coingecko-tickers-scheduler --location=europe-west3 --schedule="*/10 * * * *" --uri="https://europe-west3-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/rich-principle-383410/jobs/cache-coingecko-tickers-job:run" --http-method=POST --oidc-service-account-email=rich-principle-383410@appspot.gserviceaccount.com
+
       - name: deploy api-app
         run: gcloud beta run services replace .gcp/hydradx_api_app.yml

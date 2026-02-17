@@ -31,7 +31,7 @@ export const JOBS = {
 export const CACHE_SETTINGS = {
   coingeckoV1Tickers: {
     key: "coingecko_v1_tickers",
-    expire_after: 60,
+    expire_after: 10 * 60,
   },
   hydrationWebV1Stats: {
     key: "hydration-web_v1_stats",

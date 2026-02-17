@@ -1,0 +1,12 @@
+name: projects/rich-principle-383410/locations/europe-west3/jobs/cache-coingecko-tickers-scheduler
+description: "Run coingecko tickers cache job every 10 minutes"
+schedule: "*/10 * * * *"
+timeZone: "UTC"
+httpTarget:
+  uri: https://europe-west3-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/rich-principle-383410/jobs/cache-coingecko-tickers-job:run
+  httpMethod: POST
+  oauthToken:
+    serviceAccountEmail: rich-principle-383410@appspot.gserviceaccount.com
+attemptDeadline: 320s
+retryConfig:
+  retryCount: 0
