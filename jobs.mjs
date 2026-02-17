@@ -9,7 +9,7 @@ import { cacheHydrationWebStatsJob } from "./jobs/cache_hydration-web_stats_job.
 import { cacheHydradxUiStatsTvlJob } from "./jobs/cache_hydradx-ui_stats_tvl_job.mjs";
 import { cacheHydradxUiV2StatsVolumeJob } from "./jobs/cache_hydradx-ui_v2_stats_volume_job.mjs";
 import { cacheCoinmarketcapSummaryJob } from "./jobs/cache_coinmarketcap_summary_job.mjs";
-import { newSqlClient } from "./clients/sql.mjs";
+import { newSqlClient, newOrcaSqlClient } from "./clients/sql.mjs";
 import { newRedisClient } from "./clients/redis.mjs";
 
 const main = async () => {
@@ -31,11 +31,12 @@ async function executeJob(job_name) {
   console.log(`Executing ${job_name}..`);
 
   const sqlClient = await newSqlClient();
+  const orcaSqlClient = await newOrcaSqlClient();
   const redisClient = await newRedisClient();
 
   switch (job_name) {
     case JOBS["cacheCoingeckoTickersJob"]: {
-      await cacheCoingeckoTickersJob(sqlClient, redisClient);
+      await cacheCoingeckoTickersJob(orcaSqlClient, redisClient);
       break;
     }
     case JOBS["cacheHydrationWebStatsJob"]: {

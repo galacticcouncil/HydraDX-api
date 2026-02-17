@@ -5,6 +5,11 @@ import {
   sqlUser,
   sqlPass,
   sqlDatabase,
+  orcaSqlHost,
+  orcaSqlPort,
+  orcaSqlUser,
+  orcaSqlPass,
+  orcaSqlDatabase,
 } from "../variables.mjs";
 
 export async function newSqlClient() {
@@ -14,6 +19,20 @@ export async function newSqlClient() {
     user: sqlUser(),
     password: sqlPass(),
     database: sqlDatabase(),
+    max: 500,
+  });
+
+  const client = await pool.connect();
+  return client;
+}
+
+export async function newOrcaSqlClient() {
+  const pool = new PG.Pool({
+    host: orcaSqlHost(),
+    port: orcaSqlPort(),
+    user: orcaSqlUser(),
+    password: orcaSqlPass(),
+    database: orcaSqlDatabase(),
     max: 500,
   });
 

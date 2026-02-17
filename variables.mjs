@@ -31,6 +31,13 @@ export const sqlUser = () => "squid";
 export const sqlPass = () => "squid";
 export const sqlDatabase = () => "squid";
 
+// Orca database configuration (Subsquid)
+export const orcaSqlHost = () => "pg.squid.subsquid.io";
+export const orcaSqlPort = () => 5432;
+export const orcaSqlUser = () => "18534_3xqgla";
+export const orcaSqlPass = () => process.env.PGPASSWORD_DB_ORCA;
+export const orcaSqlDatabase = () => "18534_3xqgla";
+
 export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
   cacheHydrationWebStatsJob: "cache-hydration-web-stats-job",
