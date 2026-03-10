@@ -78,7 +78,7 @@ jobs:
             UPDATED=$(echo "$SERVICE_DATA" | jq \
               --arg image "$NEW_IMAGE:latest" \
               --arg reponame "$NEW_IMAGE" \
-              '.repository.tag = "latest" | .repository.image = $image | .repository.name = $reponame | .repository.imageDigest = null')
+              '.repository.tag = "latest" | .repository.image = $image | .repository.name = $reponame | del(.repository.imageDigest)')
 
             curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
               -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}" \
