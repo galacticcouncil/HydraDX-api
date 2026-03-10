@@ -34,7 +34,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push API app
-        id: build-app
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -46,7 +45,6 @@ jobs:
             greenjay/hydration-api:${{ github.sha }}
 
       - name: Build and push API jobs
-        id: build-jobs
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -57,41 +55,46 @@ jobs:
             greenjay/hydration-api-jobs:latest
             greenjay/hydration-api-jobs:${{ github.sha }}
 
-      - name: Redeploy on Swarm
-        env:
-          APP_DIGEST: ${{ steps.build-app.outputs.digest }}
-          JOBS_DIGEST: ${{ steps.build-jobs.outputs.digest }}
+      - name: Update services on Swarmpit
         run: |
+          SHA="${{ github.sha }}"
           SERVICES=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
             -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
 
-          for SERVICE in "hydration-api_app" "hydration-api_jobs"; do
-            if [ "$SERVICE" = "hydration-api_app" ]; then
-              NEW_IMAGE="greenjay/hydration-api"
-              NEW_DIGEST="$APP_DIGEST"
-            else
-              NEW_IMAGE="greenjay/hydration-api-jobs"
-              NEW_DIGEST="$JOBS_DIGEST"
-            fi
-
-            SERVICE_DATA=$(echo "$SERVICES" | jq --arg name "$SERVICE" '.[] | select(.serviceName == $name)')
-            SERVICE_ID=$(echo "$SERVICE_DATA" | jq -r '.id')
+          update_service() {
+            local NAME="$1"
+            local IMAGE="$2"
+            local SERVICE_ID
+            SERVICE_ID=$(echo "$SERVICES" | jq -r --arg name "$NAME" '.[] | select(.serviceName == $name) | .id')
             if [ -z "$SERVICE_ID" ] || [ "$SERVICE_ID" = "null" ]; then
-              echo "Service $SERVICE not found"
+              echo "Service $NAME not found"
               exit 1
             fi
 
-            echo "Updating $SERVICE to $NEW_IMAGE:latest@$NEW_DIGEST..."
-            UPDATED=$(echo "$SERVICE_DATA" | jq \
-              --arg tag "latest" \
-              --arg image "$NEW_IMAGE:latest" \
-              --arg reponame "$NEW_IMAGE" \
-              --arg digest "$NEW_DIGEST" \
-              '.repository.tag = $tag | .repository.image = $image | .repository.name = $reponame | .repository.imageDigest = $digest')
+            echo "Updating $NAME to image $IMAGE ..."
+            # Get current service spec
+            SERVICE_JSON=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
+              -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
 
-            curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
+            # Update the image tag in the spec
+            UPDATED=$(echo "$SERVICE_JSON" | jq --arg img "$IMAGE" '.repository.tag = ($img | split(":")[1])')
+
+            # POST the updated service
+            HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+              -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
               -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}" \
               -H "Content-Type: application/json" \
-              -d "$UPDATED"
+              -d "$UPDATED")
+
+            echo "HTTP $HTTP_CODE"
+            cat /tmp/response.txt
             echo ""
-          done
+
+            if [ "$HTTP_CODE" -ge 400 ]; then
+              echo "Failed to update $NAME"
+              exit 1
+            fi
+          }
+
+          update_service "hydration-api_app" "greenjay/hydration-api:${SHA}"
+          update_service "hydration-api_jobs" "greenjay/hydration-api-jobs:${SHA}"
