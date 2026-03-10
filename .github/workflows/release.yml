@@ -34,6 +34,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push API app
+        id: build-app
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -45,6 +46,7 @@ jobs:
             greenjay/hydration-api:${{ github.sha }}
 
       - name: Build and push API jobs
+        id: build-jobs
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -58,12 +60,15 @@ jobs:
       - name: Update services on Swarmpit
         run: |
           SHA="${{ github.sha }}"
+          APP_DIGEST="${{ steps.build-app.outputs.digest }}"
+          JOBS_DIGEST="${{ steps.build-jobs.outputs.digest }}"
           SERVICES=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
             -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
 
           update_service() {
             local NAME="$1"
-            local IMAGE="$2"
+            local TAG="$2"
+            local DIGEST="$3"
             local SERVICE_ID
             SERVICE_ID=$(echo "$SERVICES" | jq -r --arg name "$NAME" '.[] | select(.serviceName == $name) | .id')
             if [ -z "$SERVICE_ID" ] || [ "$SERVICE_ID" = "null" ]; then
@@ -71,14 +76,17 @@ jobs:
               exit 1
             fi
 
-            echo "Updating $NAME to image $IMAGE ..."
+            echo "Updating $NAME to tag $TAG with digest $DIGEST ..."
             # Get current service spec
             SERVICE_JSON=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
               -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
 
-            # Update the image tag and fix null fields that Swarmpit's spec requires
-            UPDATED=$(echo "$SERVICE_JSON" | jq --arg img "$IMAGE" '
-              .repository.tag = ($img | split(":")[1]) |
+            # Update tag, digest, and fix null fields that Swarmpit's spec requires
+            UPDATED=$(echo "$SERVICE_JSON" | jq \
+              --arg tag "$TAG" \
+              --arg digest "$DIGEST" '
+              .repository.tag = $tag |
+              .repository.imageDigest = $digest |
               .tty = (.tty // false) |
               .dir = (.dir // "") |
               .command = (.command // []) |
@@ -104,5 +112,5 @@ jobs:
             fi
           }
 
-          update_service "hydration-api_app" "greenjay/hydration-api:${SHA}"
-          update_service "hydration-api_jobs" "greenjay/hydration-api-jobs:${SHA}"
+          update_service "hydration-api_app" "${SHA}" "${APP_DIGEST}"
+          update_service "hydration-api_jobs" "${SHA}" "${JOBS_DIGEST}"
