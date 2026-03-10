@@ -59,7 +59,7 @@ jobs:
           echo "Services response: $SERVICES"
 
           for SERVICE in "hydration-api_app" "hydration-api_jobs"; do
-            SERVICE_ID=$(echo "$SERVICES" | jq -r --arg name "$SERVICE" '.[] | select(.name == $name) | .id')
+            SERVICE_ID=$(echo "$SERVICES" | jq -r --arg name "$SERVICE" '.[] | select(.serviceName == $name) | .id')
             if [ -z "$SERVICE_ID" ] || [ "$SERVICE_ID" = "null" ]; then
               echo "Service $SERVICE not found"
               exit 1
