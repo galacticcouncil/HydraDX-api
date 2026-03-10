@@ -53,18 +53,10 @@ jobs:
 
       - name: Redeploy on Swarmpit
         run: |
-          TOKEN=$(curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/tokens" \
-            -H "Content-Type: application/json" \
-            -d '{"username":"${{ secrets.SWARMPIT_USER }}","password":"${{ secrets.SWARMPIT_PASSWORD }}"}' \
-            | jq -r '.token')
-
-          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
-            echo "Failed to get Swarmpit token"
-            exit 1
-          fi
-
           SERVICES=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
-            -H "Authorization: Bearer $TOKEN")
+            -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
+
+          echo "Services response: $SERVICES"
 
           for SERVICE in "hydration-api_app" "hydration-api_jobs"; do
             SERVICE_ID=$(echo "$SERVICES" | jq -r --arg name "$SERVICE" '.[] | select(.name == $name) | .id')
@@ -74,6 +66,6 @@ jobs:
             fi
             echo "Redeploying $SERVICE ($SERVICE_ID)..."
             curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID/redeploy" \
-              -H "Authorization: Bearer $TOKEN"
+              -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}"
             echo "Done"
           done
