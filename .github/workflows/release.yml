@@ -51,27 +51,29 @@ jobs:
           push: true
           tags: greenjay/hydration-api-jobs:latest
 
-      - name: Get Swarmpit auth token
-        id: swarmpit-auth
+      - name: Redeploy on Swarmpit
         run: |
           TOKEN=$(curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/tokens" \
             -H "Content-Type: application/json" \
             -d '{"username":"${{ secrets.SWARMPIT_USER }}","password":"${{ secrets.SWARMPIT_PASSWORD }}"}' \
             | jq -r '.token')
-          echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
-      - name: Redeploy app service
-        run: |
-          SERVICE_ID=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
-            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}" \
-            | jq -r '.[] | select(.name == "hydration-api_app") | .id')
-          curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID/redeploy" \
-            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}"
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "Failed to get Swarmpit token"
+            exit 1
+          fi
 
-      - name: Redeploy jobs service
-        run: |
-          SERVICE_ID=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
-            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}" \
-            | jq -r '.[] | select(.name == "hydration-api_jobs") | .id')
-          curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID/redeploy" \
-            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}"
+          SERVICES=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
+            -H "Authorization: Bearer $TOKEN")
+
+          for SERVICE in "hydration-api_app" "hydration-api_jobs"; do
+            SERVICE_ID=$(echo "$SERVICES" | jq -r --arg name "$SERVICE" '.[] | select(.name == $name) | .id')
+            if [ -z "$SERVICE_ID" ] || [ "$SERVICE_ID" = "null" ]; then
+              echo "Service $SERVICE not found"
+              exit 1
+            fi
+            echo "Redeploying $SERVICE ($SERVICE_ID)..."
+            curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID/redeploy" \
+              -H "Authorization: Bearer $TOKEN"
+            echo "Done"
+          done
