@@ -34,7 +34,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push API app
-        id: build-app
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -46,7 +45,6 @@ jobs:
             greenjay/hydration-api:${{ github.sha }}
 
       - name: Build and push API jobs
-        id: build-jobs
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -57,60 +55,34 @@ jobs:
             greenjay/hydration-api-jobs:latest
             greenjay/hydration-api-jobs:${{ github.sha }}
 
-      - name: Update services on Swarmpit
+      - name: Deploy stack on Swarmpit
         run: |
           SHA="${{ github.sha }}"
-          APP_DIGEST="${{ steps.build-app.outputs.digest }}"
-          JOBS_DIGEST="${{ steps.build-jobs.outputs.digest }}"
-          SERVICES=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
-            -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
 
-          update_service() {
-            local NAME="$1"
-            local TAG="$2"
-            local DIGEST="$3"
-            local SERVICE_ID
-            SERVICE_ID=$(echo "$SERVICES" | jq -r --arg name "$NAME" '.[] | select(.serviceName == $name) | .id')
-            if [ -z "$SERVICE_ID" ] || [ "$SERVICE_ID" = "null" ]; then
-              echo "Service $NAME not found"
-              exit 1
-            fi
+          # Read the compose file and substitute image tags with SHA
+          COMPOSE=$(cat docker-stack.yml \
+            | sed "s|greenjay/hydration-api:latest|greenjay/hydration-api:${SHA}|g" \
+            | sed "s|greenjay/hydration-api-jobs:latest|greenjay/hydration-api-jobs:${SHA}|g")
 
-            echo "Updating $NAME to tag $TAG with digest $DIGEST ..."
-            # Get current service spec
-            SERVICE_JSON=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
-              -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
+          echo "Deploying stack with images tagged ${SHA} ..."
 
-            # Update tag, digest, and fix null fields that Swarmpit's spec requires
-            UPDATED=$(echo "$SERVICE_JSON" | jq \
-              --arg tag "$TAG" \
-              --arg digest "$DIGEST" '
-              .repository.tag = $tag |
-              .repository.imageDigest = $digest |
-              .tty = (.tty // false) |
-              .dir = (.dir // "") |
-              .command = (.command // []) |
-              .agent = (.agent // false) |
-              .immutable = (.immutable // false) |
-              .user = (.user // "")
-            ')
+          # Use Swarmpit's stack update API (runs docker stack deploy internally)
+          PAYLOAD=$(jq -n --arg name "hydration-api" --arg compose "$COMPOSE" \
+            '{name: $name, spec: {compose: $compose}}')
 
-            # POST the updated service
-            HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
-              -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
-              -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              -d "$UPDATED")
+          HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -X POST "${{ secrets.SWARMPIT_URL }}/api/stacks/hydration-api" \
+            -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
 
-            echo "HTTP $HTTP_CODE"
-            cat /tmp/response.txt
-            echo ""
+          echo "HTTP $HTTP_CODE"
+          cat /tmp/response.txt
+          echo ""
 
-            if [ "$HTTP_CODE" -ge 400 ]; then
-              echo "Failed to update $NAME"
-              exit 1
-            fi
-          }
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "Stack deploy failed"
+            exit 1
+          fi
 
-          update_service "hydration-api_app" "${SHA}" "${APP_DIGEST}"
-          update_service "hydration-api_jobs" "${SHA}" "${JOBS_DIGEST}"
+          echo "Stack deployed successfully"
