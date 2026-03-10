@@ -76,8 +76,16 @@ jobs:
             SERVICE_JSON=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID" \
               -H "Authorization: ${{ secrets.SWARMPIT_TOKEN }}")
 
-            # Update the image tag in the spec
-            UPDATED=$(echo "$SERVICE_JSON" | jq --arg img "$IMAGE" '.repository.tag = ($img | split(":")[1])')
+            # Update the image tag and fix null fields that Swarmpit's spec requires
+            UPDATED=$(echo "$SERVICE_JSON" | jq --arg img "$IMAGE" '
+              .repository.tag = ($img | split(":")[1]) |
+              .tty = (.tty // false) |
+              .dir = (.dir // "") |
+              .command = (.command // []) |
+              .agent = (.agent // false) |
+              .immutable = (.immutable // false) |
+              .user = (.user // "")
+            ')
 
             # POST the updated service
             HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
