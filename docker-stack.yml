@@ -1,0 +1,116 @@
+# Usage:
+#   docker stack deploy -c docker-stack.yml hydration-api --with-registry-auth
+# Override image tags via env vars IMAGE_API and IMAGE_JOBS if needed.
+
+version: "3.8"
+
+x-api-common: &api-common
+  environment:
+    - DOCKER_RUN=1
+    - REDIS_URL=redis://redis:6379
+  secrets:
+    - pgpassword_db_orca
+    - xcm_auth_header
+  networks:
+    - hydration-net
+  depends_on:
+    - redis
+
+services:
+  redis:
+    image: redis:7-alpine
+    networks:
+      - hydration-net
+    volumes:
+      - redis-data:/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 256M
+
+  app:
+    <<: *api-common
+    image: ${IMAGE_API:-greenjay/hydration-api:latest}
+    environment:
+      - DOCKER_RUN=1
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - hydration-net
+      - gateway
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 512M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=gateway"
+        - "traefik.http.routers.hydration-api.rule=Host(`api.nice.hydration.cloud`)"
+        - "traefik.http.routers.hydration-api.entrypoints=websecure"
+        - "traefik.http.routers.hydration-api.tls.certresolver=myresolver"
+        - "traefik.http.services.hydration-api.loadbalancer.server.port=3000"
+        - "traefik.http.routers.hydration-api-http.rule=Host(`api.nice.hydration.cloud`)"
+        - "traefik.http.routers.hydration-api-http.entrypoints=web"
+        - "traefik.http.routers.hydration-api-http.middlewares=https-redirect"
+        - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/health/app').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  jobs:
+    <<: *api-common
+    image: ${IMAGE_JOBS:-greenjay/hydration-api-jobs:latest}
+    environment:
+      - DOCKER_RUN=1
+      - REDIS_URL=redis://redis:6379
+      - JOB_NAME=cache-coingecko-tickers-job
+      - CONTINUOUS_JOB=true
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  hydration-net:
+    driver: overlay
+    attachable: true
+  gateway:
+    external: true
+
+volumes:
+  redis-data:
+
+secrets:
+  pgpassword_db_orca:
+    external: true
+  xcm_auth_header:
+    external: true

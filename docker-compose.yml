@@ -1,0 +1,64 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      target: api-app
+    ports:
+      - "3000:3000"
+    environment:
+      - DOCKER_RUN=1
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - PGPASSWORD_DB_ORCA=${PGPASSWORD_DB_ORCA}
+      - XCM_AUTH_HEADER=${XCM_AUTH_HEADER}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/health/app').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  jobs:
+    build:
+      context: .
+      target: api-jobs
+    environment:
+      - DOCKER_RUN=1
+      - REDIS_URL=redis://redis:6379
+      - JOB_NAME=cache-coingecko-tickers-job
+      - CONTINUOUS_JOB=true
+      - PGPASSWORD_DB_ORCA=${PGPASSWORD_DB_ORCA}
+      - XCM_AUTH_HEADER=${XCM_AUTH_HEADER}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true

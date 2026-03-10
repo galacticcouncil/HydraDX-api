@@ -1,14 +1,26 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 export const IS_DOCKER_RUN = process.env.DOCKER_RUN !== undefined;
+
+// Read from Docker secret file if present, fall back to env var
+const readSecret = (secretName, envVar) => {
+  try {
+    return fs.readFileSync(`/run/secrets/${secretName}`, "utf8").trim();
+  } catch {
+    return process.env[envVar];
+  }
+};
 export const IS_GOOGLE_CLOUD_RUN = process.env.K_SERVICE !== undefined;
 export const IS_GCP_JOB = process.env.GOOGLE_CLOUD_RUN_JOB !== undefined;
 
 export const dirname = () => path.dirname(fileURLToPath(import.meta.url));
 
 export const redisUri = () => {
-  if (IS_GOOGLE_CLOUD_RUN || IS_GCP_JOB) {
+  if (process.env.REDIS_URL) {
+    return process.env.REDIS_URL;
+  } else if (IS_GOOGLE_CLOUD_RUN || IS_GCP_JOB) {
     return "redis://10.130.48.5:6379";
   } else {
     return "redis://127.0.0.1:6379";
@@ -21,8 +33,12 @@ export const rpcUri = () => "wss://rpc.hydradx.cloud";
 export const orcaSqlHost = () => "pg.squid.subsquid.io";
 export const orcaSqlPort = () => 5432;
 export const orcaSqlUser = () => "18534_3xqgla";
-export const orcaSqlPass = () => process.env.PGPASSWORD_DB_ORCA;
+export const orcaSqlPass = () =>
+  readSecret("pgpassword_db_orca", "PGPASSWORD_DB_ORCA");
 export const orcaSqlDatabase = () => "18534_3xqgla";
+
+export const xcmAuthHeader = () =>
+  readSecret("xcm_auth_header", "XCM_AUTH_HEADER");
 
 export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",

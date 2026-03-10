@@ -1,10 +1,8 @@
 import { gql, request as gqlRequest } from "graphql-request";
-import { CACHE_SETTINGS } from "../../../../variables.mjs";
+import { CACHE_SETTINGS, xcmAuthHeader } from "../../../../variables.mjs";
 
-const SPOT_PRICE_ENDPOINT =
+const ORCA_GRAPHQL_ENDPOINT =
   "https://galacticcouncil.squids.live/hydration-pools:orca-prod/api/graphql";
-const UNIFIED_GRAPHQL_ENDPOINT =
-  "https://galacticcouncil.squids.live/hydration-pools:unified-prod/api/graphql";
 const XCM_API_ENDPOINT = "https://api.ocelloids.net/query/xcm";
 
 export default async (fastify, opts) => {
@@ -48,7 +46,7 @@ export default async (fastify, opts) => {
           volumeData,
         ] = await Promise.all([
           gqlRequest(
-            UNIFIED_GRAPHQL_ENDPOINT,
+            ORCA_GRAPHQL_ENDPOINT,
             gql`
               {
                 omnipoolAssets {
@@ -61,7 +59,7 @@ export default async (fastify, opts) => {
             `
           ),
           gqlRequest(
-            UNIFIED_GRAPHQL_ENDPOINT,
+            ORCA_GRAPHQL_ENDPOINT,
             gql`
               {
                 xykpools {
@@ -74,7 +72,7 @@ export default async (fastify, opts) => {
             `
           ),
           gqlRequest(
-            UNIFIED_GRAPHQL_ENDPOINT,
+            ORCA_GRAPHQL_ENDPOINT,
             gql`
               {
                 stableswapAssets {
@@ -86,7 +84,7 @@ export default async (fastify, opts) => {
             `
           ),
           gqlRequest(
-            UNIFIED_GRAPHQL_ENDPOINT,
+            ORCA_GRAPHQL_ENDPOINT,
             gql`
               {
                 accounts {
@@ -96,7 +94,7 @@ export default async (fastify, opts) => {
             `
           ),
           gqlRequest(
-            SPOT_PRICE_ENDPOINT,
+            ORCA_GRAPHQL_ENDPOINT,
             gql`
               {
                 platformTotalTvl {
@@ -108,7 +106,7 @@ export default async (fastify, opts) => {
             `
           ),
           gqlRequest(
-            SPOT_PRICE_ENDPOINT,
+            ORCA_GRAPHQL_ENDPOINT,
             gql`
               {
                 platformTotalVolumesByPeriod(filter: { period: _30D_ }) {
@@ -154,7 +152,7 @@ export default async (fastify, opts) => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${process.env.XCM_AUTH_HEADER}`,
+              Authorization: `Bearer ${xcmAuthHeader()}`,
             },
             body: JSON.stringify({
               args: {

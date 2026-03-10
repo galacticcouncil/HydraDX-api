@@ -15,6 +15,10 @@ RUN npm i --production
 # Copy local code to the container image.
 COPY . .
 
+# Run as non-root user
+RUN chown -R node:node /usr/src/app
+USER node
+
 # Expose port
 EXPOSE 3000
 ENV DOCKER_RUN=1 PORT=3000

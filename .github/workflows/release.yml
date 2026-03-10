@@ -4,91 +4,71 @@ on:
   push:
     branches: [main]
 
-env:
-  GCP_PROJECT_ID: ${{secrets.GCP_PROJECT_ID}}
-  GCP_SERVICE_ACCOUNT: ${{secrets.GCP_SERVICE_ACCOUNT}}
-  GCP_IDENTITY_PROVIDER_ID: ${{secrets.GCP_IDENTITY_PROVIDER_ID}}
-  XCM_AUTH_HEADER: ${{secrets.XCM_AUTH_HEADER}}
-  GCP_REGION: europe-west3
-  GCP_REPOSITORY: hydradx-api
-  GCP_APP: hydradx-api-app
-  GCP_JOBS: hydradx-api-jobs
-
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Set up npm
-        run: npm install
-      - name: Lint
-        run: npm run lint
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run lint
 
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     needs: test
-
-    permissions:
-      contents: "read"
-      id-token: "write"
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Authenticate with GCP
-        uses: "google-github-actions/auth@v1"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          workload_identity_provider: ${{env.GCP_IDENTITY_PROVIDER_ID}}
-          service_account: ${{env.GCP_SERVICE_ACCOUNT}}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Cloud SDK
-        uses: "google-github-actions/setup-gcloud@v1"
-
-      - name: Set up Docker
-        run: gcloud auth configure-docker ${{env.GCP_REGION}}-docker.pkg.dev
-
-      - name: Build and Push API app
-        run: |-
-          docker build --target api-app -t "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_APP}}:latest" ./
-          docker push "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_APP}}:latest"
-
-      - name: Build and Push API jobs
-        run: |-
-          docker build --target api-jobs -t "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_JOBS}}:latest" ./
-          docker push "${{env.GCP_REGION}}-docker.pkg.dev/${{env.GCP_PROJECT_ID}}/${{env.GCP_REPOSITORY}}/${{env.GCP_JOBS}}:latest"
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    permissions:
-      contents: "read"
-      id-token: "write"
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Authenticate with GCP
-        uses: "google-github-actions/auth@v1"
+      - name: Build and push API app
+        uses: docker/build-push-action@v5
         with:
-          workload_identity_provider: ${{env.GCP_IDENTITY_PROVIDER_ID}}
-          service_account: ${{env.GCP_SERVICE_ACCOUNT}}
+          context: .
+          target: api-app
+          platforms: linux/amd64
+          push: true
+          tags: greenjay/hydration-api:latest
 
-      - name: Set up Cloud SDK
-        uses: "google-github-actions/setup-gcloud@v1"
+      - name: Build and push API jobs
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: api-jobs
+          platforms: linux/amd64
+          push: true
+          tags: greenjay/hydration-api-jobs:latest
 
-      - name: Set up gcloud beta
-        run: gcloud components install beta
+      - name: Get Swarmpit auth token
+        id: swarmpit-auth
+        run: |
+          TOKEN=$(curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/tokens" \
+            -H "Content-Type: application/json" \
+            -d '{"username":"${{ secrets.SWARMPIT_USER }}","password":"${{ secrets.SWARMPIT_PASSWORD }}"}' \
+            | jq -r '.token')
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
-      - name: deploy cache_coingecko_tickers_job
-        run: gcloud beta run jobs replace .gcp/jobs/cache_coingecko_tickers_job.yml
+      - name: Redeploy app service
+        run: |
+          SERVICE_ID=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
+            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}" \
+            | jq -r '.[] | select(.name == "hydration-api_app") | .id')
+          curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID/redeploy" \
+            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}"
 
-      - name: execute cache_coingecko_tickers_job
-        run: gcloud run jobs execute cache-coingecko-tickers-job --region europe-west3 --wait
-
-      - name: deploy api-app
-        run: gcloud beta run services replace .gcp/hydradx_api_app.yml
+      - name: Redeploy jobs service
+        run: |
+          SERVICE_ID=$(curl -s "${{ secrets.SWARMPIT_URL }}/api/services" \
+            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}" \
+            | jq -r '.[] | select(.name == "hydration-api_jobs") | .id')
+          curl -s -X POST "${{ secrets.SWARMPIT_URL }}/api/services/$SERVICE_ID/redeploy" \
+            -H "Authorization: Bearer ${{ steps.swarmpit-auth.outputs.token }}"

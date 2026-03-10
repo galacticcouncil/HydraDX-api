@@ -58,3 +58,6 @@ profile*
 *flamegraph*
 
 dump.rdb
+
+# local env secrets
+.env
