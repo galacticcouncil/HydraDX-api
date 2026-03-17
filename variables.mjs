@@ -37,6 +37,14 @@ export const orcaSqlPass = () =>
   readSecret("pgpassword_db_orca", "PGPASSWORD_DB_ORCA");
 export const orcaSqlDatabase = () => "18534_3xqgla";
 
+// Fallback database configuration (shared credentials, two hosts)
+export const fallbackSqlHosts = () => ["91.98.180.149", "135.181.128.254"];
+export const fallbackSqlPort = () => 16201;
+export const fallbackSqlUser = () => "read_only_postgres";
+export const fallbackSqlPass = () =>
+  readSecret("pgpassword_db_fallback", "PGPASSWORD_DB_FALLBACK");
+export const fallbackSqlDatabase = () => "aggregator_indexer";
+
 export const xcmAuthHeader = () =>
   readSecret("xcm_auth_header", "XCM_AUTH_HEADER");
 

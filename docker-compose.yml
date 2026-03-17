@@ -52,6 +52,7 @@ services:
       - JOB_NAME=cache-coingecko-tickers-job
       - CONTINUOUS_JOB=true
       - PGPASSWORD_DB_ORCA=${PGPASSWORD_DB_ORCA}
+      - PGPASSWORD_DB_FALLBACK=${PGPASSWORD_DB_FALLBACK}
       - XCM_AUTH_HEADER=${XCM_AUTH_HEADER}
     depends_on:
       redis:

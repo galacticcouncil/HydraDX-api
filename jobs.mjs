@@ -1,6 +1,6 @@
 import { JOBS } from "./variables.mjs";
 import { cacheCoingeckoTickersJob } from "./jobs/cache_coingecko_tickers_job.mjs";
-import { newOrcaSqlClient } from "./clients/sql.mjs";
+import { newSqlClientWithFallback } from "./clients/sql.mjs";
 import { newRedisClient } from "./clients/redis.mjs";
 
 const { JOB_NAME, CONTINUOUS_JOB } = process.env;
@@ -33,22 +33,28 @@ async function executeJob(job_name) {
     );
   }
 
-  const orcaSqlClient = await newOrcaSqlClient();
   const redisClient = await newRedisClient();
 
   try {
     do {
-      console.log(`Executing ${job_name}..`);
-      switch (job_name) {
-        case JOBS["cacheCoingeckoTickersJob"]: {
-          await cacheCoingeckoTickersJob(orcaSqlClient, redisClient);
-          break;
+      // Fresh SQL client each iteration: tries orca first, then fallbacks.
+      // This ensures automatic failover if orca goes down between iterations.
+      let sqlClient;
+      try {
+        sqlClient = await newSqlClientWithFallback();
+        console.log(`Executing ${job_name}..`);
+        switch (job_name) {
+          case JOBS["cacheCoingeckoTickersJob"]: {
+            await cacheCoingeckoTickersJob(sqlClient, redisClient);
+            break;
+          }
         }
+        console.log(`Executed ${job_name}`);
+      } finally {
+        if (sqlClient) await sqlClient.release();
       }
-      console.log(`Executed ${job_name}`);
-    } while (CONTINUOUS_JOB === "true");
+    } while (isContinuousJob());
   } finally {
-    await orcaSqlClient.release();
     await redisClient.disconnect();
   }
 
