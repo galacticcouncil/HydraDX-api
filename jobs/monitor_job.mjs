@@ -66,21 +66,39 @@ async function checkCoingeckoTickers() {
 }
 
 async function checkHydrationWebStats() {
-  try {
-    const res = await fetch(CHECKS.hydration_web_stats.url, {
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) return { up: false };
-    const data = await res.json();
-    const up =
-      data != null &&
-      typeof data.tvl === "number" &&
-      data.tvl > 0 &&
-      typeof data.vol_30d === "number";
-    return { up };
-  } catch {
-    return { up: false };
-  }
+  const isValidStats = (data) =>
+    data != null &&
+    typeof data.tvl === "number" &&
+    data.tvl > 0 &&
+    typeof data.vol_30d === "number" &&
+    typeof data.xcm_vol_30d === "number";
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(CHECKS.hydration_web_stats.url, {
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) return { up: false, data: null };
+      const data = await res.json();
+      return { up: isValidStats(data), data };
+    } catch {
+      return { up: false, data: null };
+    }
+  };
+
+  const first = await fetchStats();
+  // If data is already good, return immediately.
+  if (first.up) return { up: true };
+
+  // Cold cache: the request above already triggered cache population.
+  // Wait 30 s for the stats to load, then do one final check.
+  console.log(
+    "[monitor] hydration_web_stats: cold cache detected, waiting 30s for warm-up…"
+  );
+  await new Promise((resolve) => setTimeout(resolve, 30_000));
+
+  const second = await fetchStats();
+  return { up: second.up };
 }
 
 async function checkDexScreenerAdapter() {
