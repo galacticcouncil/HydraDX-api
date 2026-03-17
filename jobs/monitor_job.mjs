@@ -19,6 +19,8 @@ const CHECKS = {
     label: "Hydration Web Stats",
     url: "https://api.nice.hydration.cloud/hydration-web/v1/stats",
     impact: "hydration.net website",
+    minFailures: 3, // cache warm-up can cause transient failures
+    mentions: "<@409780457585246216>",
   },
   dexscreener_adapter: {
     label: "DexScreener Adapter",
@@ -142,7 +144,8 @@ async function sendDiscordAlert(checkId, isUp) {
     ? "has no data"
     : "stalled (data >10 min old)";
 
-  const content = `${status} ${link} ${verb}. Impact: ${impact}. cc ${DISCORD_MENTIONS}`;
+  const mentions = CHECKS[checkId].mentions ?? DISCORD_MENTIONS;
+  const content = `${status} ${link} ${verb}. Impact: ${impact}. cc ${mentions}`;
 
   try {
     const res = await fetch(webhookUrl, {
@@ -169,6 +172,10 @@ function stateKey(checkId) {
   return `monitor:state:${checkId}`;
 }
 
+function failuresKey(checkId) {
+  return `monitor:failures:${checkId}`;
+}
+
 async function handleResult(checkId, result, redisClient) {
   const { up, ageSeconds = null } = result;
   const now = Math.floor(Date.now() / 1000);
@@ -178,17 +185,33 @@ async function handleResult(checkId, result, redisClient) {
   metrics[checkId].ageSeconds = ageSeconds;
   metrics[checkId].lastCheck = now;
 
-  const key = stateKey(checkId);
-  const previousState = await redisClient.get(key);
-  const currentState = up ? "ok" : "error";
+  const stateK = stateKey(checkId);
+  const failK = failuresKey(checkId);
+  const previousState = await redisClient.get(stateK);
+  const minFailures = CHECKS[checkId].minFailures ?? 1;
 
-  // Only alert on state transitions
-  if (previousState !== currentState) {
+  if (up) {
+    // Reset failure counter on recovery
+    await redisClient.set(failK, "0");
+    if (previousState !== "ok") {
+      console.log(`[monitor] ${checkId}: ${previousState ?? "unknown"} → ok`);
+      await sendDiscordAlert(checkId, true);
+      await redisClient.set(stateK, "ok");
+    }
+  } else {
+    const consecutiveFailures =
+      Number((await redisClient.get(failK)) ?? "0") + 1;
+    await redisClient.set(failK, String(consecutiveFailures));
     console.log(
-      `[monitor] ${checkId}: ${previousState ?? "unknown"} → ${currentState}`
+      `[monitor] ${checkId}: failure ${consecutiveFailures}/${minFailures}`
     );
-    await sendDiscordAlert(checkId, up);
-    await redisClient.set(key, currentState);
+    if (consecutiveFailures >= minFailures && previousState !== "error") {
+      console.log(
+        `[monitor] ${checkId}: ${previousState ?? "unknown"} → error`
+      );
+      await sendDiscordAlert(checkId, false);
+      await redisClient.set(stateK, "error");
+    }
   }
 }
 
