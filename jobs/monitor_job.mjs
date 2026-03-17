@@ -137,7 +137,7 @@ async function sendDiscordAlert(checkId, isUp) {
 
   const { label, url, impact } = CHECKS[checkId];
   const link = `[${label}](${url})`;
-  const status = isUp ? "[OK]" : "[ERROR]";
+  const status = isUp ? "**[OK]**" : "**[ERROR]**";
   const verb = isUp
     ? "resumed"
     : checkId === "coingecko_tickers" || checkId === "hydration_web_stats"
@@ -145,7 +145,7 @@ async function sendDiscordAlert(checkId, isUp) {
     : "stalled (data >10 min old)";
 
   const mentions = CHECKS[checkId].mentions ?? DISCORD_MENTIONS;
-  const content = `${status} ${link} ${verb}. Impact: ${impact}. cc ${mentions}`;
+  const content = `:cd: ${status} ${link} ${verb}. Impact: ${impact}. cc ${mentions}`;
 
   try {
     const res = await fetch(webhookUrl, {
