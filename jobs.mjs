@@ -51,7 +51,7 @@ async function executeJob(job_name) {
         }
         console.log(`Executed ${job_name}`);
       } finally {
-        if (sqlClient) await sqlClient.release();
+        if (sqlClient) await sqlClient.end();
       }
     } while (isContinuousJob());
   } finally {

@@ -12,6 +12,9 @@ import {
   fallbackSqlDatabase,
 } from "../variables.mjs";
 
+// Use a Pool capped at 1 connection and return the pool directly.
+// Pool.query() handles acquire/release internally; pool.end() fully closes
+// all connections — so callers must call pool.end() when done, not release().
 async function newPoolClient({ host, port, user, password, database }) {
   const pool = new PG.Pool({
     host,
@@ -24,8 +27,10 @@ async function newPoolClient({ host, port, user, password, database }) {
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });
+  // Eagerly verify connectivity before returning.
   const client = await pool.connect();
-  return client;
+  client.release();
+  return pool;
 }
 
 export async function newOrcaSqlClient() {
@@ -39,7 +44,8 @@ export async function newOrcaSqlClient() {
 }
 
 // Tries orca first, then each fallback host in order.
-// Returns the first client that connects successfully.
+// Returns the first pool that connects successfully (max: 1 connection).
+// Caller must call pool.end() when done.
 export async function newSqlClientWithFallback() {
   const sources = [
     {
