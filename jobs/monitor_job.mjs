@@ -1,0 +1,232 @@
+import { discordWebhookUrl } from "../variables.mjs";
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+const DEXSCREENER_THRESHOLD = Number(
+  process.env.DEXSCREENER_STALE_THRESHOLD_SECONDS ?? 600
+);
+const ORCA_THRESHOLD = Number(process.env.ORCA_STALE_THRESHOLD_SECONDS ?? 600);
+
+const CHECKS = {
+  coingecko_tickers: {
+    label: "CoinGecko Tickers",
+    url: "https://api.nice.hydration.cloud/coingecko/v1/tickers",
+    impact: "CoinGecko",
+  },
+  hydration_web_stats: {
+    label: "Hydration Web Stats",
+    url: "https://api.nice.hydration.cloud/hydration-web/v1/stats",
+    impact: "hydration.net website",
+  },
+  dexscreener_adapter: {
+    label: "DexScreener Adapter",
+    url: "https://adapters.kril.hydration.cloud/dexscreener/latest-block",
+    impact: "DexScreener",
+  },
+  orca_indexer: {
+    label: "Orca Indexer",
+    url: "https://orca-main-aggr-indx.indexer.hydration.cloud/graphql",
+    impact: "DefiLlama",
+  },
+};
+
+const DISCORD_MENTIONS = "<@690220205762543643> <@409780457585246216>";
+
+// ---------------------------------------------------------------------------
+// In-memory Prometheus metrics (shared with monitor.mjs HTTP server)
+// ---------------------------------------------------------------------------
+
+export const metrics = {
+  coingecko_tickers: { up: null, ageSeconds: null, lastCheck: null },
+  hydration_web_stats: { up: null, ageSeconds: null, lastCheck: null },
+  dexscreener_adapter: { up: null, ageSeconds: null, lastCheck: null },
+  orca_indexer: { up: null, ageSeconds: null, lastCheck: null },
+};
+
+// ---------------------------------------------------------------------------
+// Individual endpoint checks
+// ---------------------------------------------------------------------------
+
+async function checkCoingeckoTickers() {
+  try {
+    const res = await fetch(CHECKS.coingecko_tickers.url, {
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return { up: false };
+    const data = await res.json();
+    const up = Array.isArray(data) && data.length > 0;
+    return { up };
+  } catch {
+    return { up: false };
+  }
+}
+
+async function checkHydrationWebStats() {
+  try {
+    const res = await fetch(CHECKS.hydration_web_stats.url, {
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return { up: false };
+    const data = await res.json();
+    const up =
+      data != null &&
+      typeof data.tvl === "number" &&
+      data.tvl > 0 &&
+      typeof data.vol_30d === "number";
+    return { up };
+  } catch {
+    return { up: false };
+  }
+}
+
+async function checkDexScreenerAdapter() {
+  try {
+    const res = await fetch(CHECKS.dexscreener_adapter.url, {
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return { up: false };
+    const data = await res.json();
+    const blockTimestamp = data?.block?.blockTimestamp;
+    if (!blockTimestamp) return { up: false };
+    const ageSeconds = Math.floor(Date.now() / 1000) - blockTimestamp;
+    const up = ageSeconds <= DEXSCREENER_THRESHOLD;
+    return { up, ageSeconds };
+  } catch {
+    return { up: false };
+  }
+}
+
+async function checkOrcaIndexer() {
+  try {
+    const res = await fetch(CHECKS.orca_indexer.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `query MyQuery { blocks(last: 1) { nodes { height timestamp } } }`,
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return { up: false };
+    const data = await res.json();
+    const node = data?.data?.blocks?.nodes?.[0];
+    if (!node?.timestamp) return { up: false };
+    // timestamp is ISO 8601 string
+    const blockMs = new Date(node.timestamp).getTime();
+    const ageSeconds = Math.floor((Date.now() - blockMs) / 1000);
+    const up = ageSeconds <= ORCA_THRESHOLD;
+    return { up, ageSeconds };
+  } catch {
+    return { up: false };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Discord notification
+// ---------------------------------------------------------------------------
+
+async function sendDiscordAlert(checkId, isUp) {
+  const webhookUrl = discordWebhookUrl();
+  if (!webhookUrl) {
+    console.warn("[monitor] DISCORD_WEBHOOK_URL not set – skipping alert");
+    return;
+  }
+
+  const { label, url, impact } = CHECKS[checkId];
+  const link = `[${label}](${url})`;
+  const status = isUp ? "[OK]" : "[ERROR]";
+  const verb = isUp
+    ? "resumed"
+    : checkId === "coingecko_tickers" || checkId === "hydration_web_stats"
+    ? "has no data"
+    : "stalled (data >10 min old)";
+
+  const content = `${status} ${link} ${verb}. Impact: ${impact}. cc ${DISCORD_MENTIONS}`;
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      console.error(
+        `[monitor] Discord webhook returned ${res.status} for ${checkId}`
+      );
+    }
+  } catch (err) {
+    console.error(`[monitor] Failed to send Discord alert for ${checkId}`, err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// State machine (Redis-backed)
+// ---------------------------------------------------------------------------
+
+function stateKey(checkId) {
+  return `monitor:state:${checkId}`;
+}
+
+async function handleResult(checkId, result, redisClient) {
+  const { up, ageSeconds = null } = result;
+  const now = Math.floor(Date.now() / 1000);
+
+  // Update in-memory metrics
+  metrics[checkId].up = up;
+  metrics[checkId].ageSeconds = ageSeconds;
+  metrics[checkId].lastCheck = now;
+
+  const key = stateKey(checkId);
+  const previousState = await redisClient.get(key);
+  const currentState = up ? "ok" : "error";
+
+  // Only alert on state transitions
+  if (previousState !== currentState) {
+    console.log(
+      `[monitor] ${checkId}: ${previousState ?? "unknown"} → ${currentState}`
+    );
+    await sendDiscordAlert(checkId, up);
+    await redisClient.set(key, currentState);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main run function (called every minute by monitor.mjs)
+// ---------------------------------------------------------------------------
+
+export async function runMonitorChecks(redisClient) {
+  console.log("[monitor] Running checks...");
+
+  const [tickersResult, statsResult, dexResult, orcaResult] =
+    await Promise.allSettled([
+      checkCoingeckoTickers(),
+      checkHydrationWebStats(),
+      checkDexScreenerAdapter(),
+      checkOrcaIndexer(),
+    ]);
+
+  const results = {
+    coingecko_tickers: tickersResult,
+    hydration_web_stats: statsResult,
+    dexscreener_adapter: dexResult,
+    orca_indexer: orcaResult,
+  };
+
+  for (const [checkId, settled] of Object.entries(results)) {
+    if (settled.status === "fulfilled") {
+      await handleResult(checkId, settled.value, redisClient);
+      const m = metrics[checkId];
+      console.log(
+        `[monitor] ${checkId}: up=${m.up}${
+          m.ageSeconds != null ? ` age=${m.ageSeconds}s` : ""
+        }`
+      );
+    } else {
+      console.error(`[monitor] ${checkId} check threw:`, settled.reason);
+    }
+  }
+
+  console.log("[monitor] Checks complete.");
+}

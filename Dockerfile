@@ -30,3 +30,8 @@ CMD [ "npm", "run", "app" ]
 # API jobs
 FROM api-base AS api-jobs
 CMD [ "npm", "run", "jobs" ]
+
+# API monitor
+FROM api-base AS api-monitor
+EXPOSE 9090
+CMD [ "npm", "run", "monitor" ]

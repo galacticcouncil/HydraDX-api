@@ -55,6 +55,17 @@ jobs:
             greenjay/hydration-api-jobs:latest
             greenjay/hydration-api-jobs:${{ github.sha }}
 
+      - name: Build and push API monitor
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          target: api-monitor
+          platforms: linux/amd64
+          push: true
+          tags: |
+            greenjay/hydration-api-monitor:latest
+            greenjay/hydration-api-monitor:${{ github.sha }}
+
       - name: Deploy stack on Swarmpit
         run: |
           SHA="${{ github.sha }}"
@@ -62,7 +73,8 @@ jobs:
           # Read the compose file and substitute image tags with SHA
           COMPOSE=$(cat docker-stack.yml \
             | sed "s|greenjay/hydration-api:latest|greenjay/hydration-api:${SHA}|g" \
-            | sed "s|greenjay/hydration-api-jobs:latest|greenjay/hydration-api-jobs:${SHA}|g")
+            | sed "s|greenjay/hydration-api-jobs:latest|greenjay/hydration-api-jobs:${SHA}|g" \
+            | sed "s|greenjay/hydration-api-monitor:latest|greenjay/hydration-api-monitor:${SHA}|g")
 
           echo "Deploying stack with images tagged ${SHA} ..."
 

@@ -62,3 +62,24 @@ services:
       - /tmp
     security_opt:
       - no-new-privileges:true
+
+  monitor:
+    build:
+      context: .
+      target: api-monitor
+    ports:
+      - "9090:9090"
+    environment:
+      - DOCKER_RUN=1
+      - REDIS_URL=redis://redis:6379
+      - MONITOR_PORT=9090
+      - DISCORD_CHANNEL_ID=884924771584860221
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - DEXSCREENER_STALE_THRESHOLD_SECONDS=600
+      - ORCA_STALE_THRESHOLD_SECONDS=600
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true

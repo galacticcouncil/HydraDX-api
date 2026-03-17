@@ -40,6 +40,9 @@ export const orcaSqlDatabase = () => "18534_3xqgla";
 export const xcmAuthHeader = () =>
   readSecret("xcm_auth_header", "XCM_AUTH_HEADER");
 
+export const discordWebhookUrl = () =>
+  readSecret("discord_webhook_url", "DISCORD_WEBHOOK_URL");
+
 export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
 };
