@@ -176,7 +176,11 @@ services:
         - "traefik.http.routers.grafana.rule=Host(`grafana.nice.hydration.cloud`)"
         - "traefik.http.routers.grafana.entrypoints=websecure"
         - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+        - "traefik.http.routers.grafana.tls.domains[0].main=grafana.nice.hydration.cloud"
         - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+        - "traefik.http.routers.grafana-http.rule=Host(`grafana.nice.hydration.cloud`)"
+        - "traefik.http.routers.grafana-http.entrypoints=web"
+        - "traefik.http.routers.grafana-http.middlewares=https-redirect"
 
 networks:
   hydration-net:
