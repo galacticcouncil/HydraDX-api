@@ -14,6 +14,7 @@ const CHECKS = {
     label: "CoinGecko Tickers",
     url: "https://api.nice.hydration.cloud/coingecko/v1/tickers",
     impact: "CoinGecko",
+    mentions: "<@409780457585246216>",
   },
   hydration_web_stats: {
     label: "Hydration Web Stats",
@@ -23,18 +24,18 @@ const CHECKS = {
     mentions: "<@409780457585246216>",
   },
   dexscreener_adapter: {
-    label: "DexScreener Adapter",
+    label: "Kril Indexer",
     url: "https://adapters.kril.hydration.cloud/dexscreener/latest-block",
     impact: "DexScreener",
+    mentions: "<@690220205762543643>",
   },
   orca_indexer: {
     label: "Orca Indexer",
     url: "https://orca-main-aggr-indx.indexer.hydration.cloud/graphql",
     impact: "DefiLlama",
+    mentions: "<@690220205762543643>",
   },
 };
-
-const DISCORD_MENTIONS = "<@690220205762543643> <@409780457585246216>";
 
 // ---------------------------------------------------------------------------
 // In-memory Prometheus metrics (shared with monitor.mjs HTTP server)
@@ -162,8 +163,9 @@ async function sendDiscordAlert(checkId, isUp) {
     ? "has no data"
     : "stalled (data >10 min old)";
 
-  const mentions = CHECKS[checkId].mentions ?? DISCORD_MENTIONS;
-  const content = `:cd: ${status} ${link} ${verb}. Impact: ${impact}. cc ${mentions}`;
+  const mentions = CHECKS[checkId].mentions;
+  const impactPart = isUp ? "" : ` Impact: ${impact}.`;
+  const content = `:cd: ${status} ${link} ${verb}.${impactPart} cc ${mentions}`;
 
   try {
     const res = await fetch(webhookUrl, {
