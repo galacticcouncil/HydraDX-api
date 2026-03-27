@@ -23,14 +23,16 @@ export const rpcUri = () => "wss://rpc.hydradx.cloud";
 export const primarySqlHost = () => "91.98.180.149";
 export const primarySqlPort = () => 16201;
 export const primarySqlUser = () => "read_only_postgres";
-export const primarySqlPass = () => process.env.PGPASSWORD_DB;
+export const primarySqlPass = () =>
+  readSecret("pgpassword_db", "PGPASSWORD_DB");
 export const primarySqlDatabase = () => "aggregator_indexer";
 
 // Fallback database configuration
 export const fallbackSqlHost = () => "135.181.128.254";
 export const fallbackSqlPort = () => 16201;
 export const fallbackSqlUser = () => "read_only_postgres";
-export const fallbackSqlPass = () => process.env.PGPASSWORD_DB_FALLBACK;
+export const fallbackSqlPass = () =>
+  readSecret("pgpassword_db_fallback", "PGPASSWORD_DB_FALLBACK");
 export const fallbackSqlDatabase = () => "aggregator_indexer";
 
 export const xcmAuthHeader = () =>

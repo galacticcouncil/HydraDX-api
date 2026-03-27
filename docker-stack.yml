@@ -86,8 +86,10 @@ services:
       - REDIS_URL=redis://redis:6379
       - JOB_NAME=cache-coingecko-tickers-job
       - CONTINUOUS_JOB=true
-      - PGPASSWORD_DB=${PGPASSWORD_DB}
-      - PGPASSWORD_DB_FALLBACK=${PGPASSWORD_DB_FALLBACK}
+    secrets:
+      - xcm_auth_header
+      - pgpassword_db
+      - pgpassword_db_fallback
     deploy:
       replicas: 1
       restart_policy:
@@ -201,4 +203,8 @@ secrets:
   xcm_auth_header:
     external: true
   discord_webhook_url:
+    external: true
+  pgpassword_db:
+    external: true
+  pgpassword_db_fallback:
     external: true
