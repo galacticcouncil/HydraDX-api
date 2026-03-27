@@ -2,7 +2,7 @@ import { gql, request as gqlRequest } from "graphql-request";
 import { CACHE_SETTINGS, xcmAuthHeader } from "../../../../variables.mjs";
 
 const ORCA_GRAPHQL_ENDPOINT =
-  "https://galacticcouncil.squids.live/hydration-pools:orca-prod/api/graphql";
+  "https://orca-main-aggr-indx.indexer.hydration.cloud/graphql";
 const XCM_API_ENDPOINT = "https://api.ocelloids.net/query/xcm";
 
 export default async (fastify, opts) => {
