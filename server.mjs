@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import appService from "./app.mjs";
-import { IS_DOCKER_RUN, IS_GOOGLE_CLOUD_RUN } from "./variables.mjs";
+import { IS_DOCKER_RUN } from "./variables.mjs";
 
 function build() {
   const fastify = Fastify({ trustProxy: true });
@@ -15,7 +15,7 @@ async function start() {
   const port = process.env.PORT || 3000;
 
   // You must listen on all IPV4 addresses in Cloud Run
-  const host = IS_DOCKER_RUN || IS_GOOGLE_CLOUD_RUN ? "0.0.0.0" : "127.0.0.1";
+  const host = IS_DOCKER_RUN ? "0.0.0.0" : "127.0.0.1";
 
   try {
     const server = build();

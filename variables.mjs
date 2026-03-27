@@ -12,37 +12,25 @@ const readSecret = (secretName, envVar) => {
     return process.env[envVar];
   }
 };
-export const IS_GOOGLE_CLOUD_RUN = process.env.K_SERVICE !== undefined;
-export const IS_GCP_JOB = process.env.GOOGLE_CLOUD_RUN_JOB !== undefined;
 
 export const dirname = () => path.dirname(fileURLToPath(import.meta.url));
 
-export const redisUri = () => {
-  if (process.env.REDIS_URL) {
-    return process.env.REDIS_URL;
-  } else if (IS_GOOGLE_CLOUD_RUN || IS_GCP_JOB) {
-    return "redis://10.130.48.5:6379";
-  } else {
-    return "redis://127.0.0.1:6379";
-  }
-};
+export const redisUri = () => process.env.REDIS_URL ?? "redis://127.0.0.1:6379";
 
 export const rpcUri = () => "wss://rpc.hydradx.cloud";
 
-// Orca database configuration (Subsquid)
-export const orcaSqlHost = () => "pg.squid.subsquid.io";
-export const orcaSqlPort = () => 5432;
-export const orcaSqlUser = () => "18534_3xqgla";
-export const orcaSqlPass = () =>
-  readSecret("pgpassword_db_orca", "PGPASSWORD_DB_ORCA");
-export const orcaSqlDatabase = () => "18534_3xqgla";
+// Primary database configuration
+export const primarySqlHost = () => "91.98.180.149";
+export const primarySqlPort = () => 16201;
+export const primarySqlUser = () => "read_only_postgres";
+export const primarySqlPass = () => process.env.PGPASSWORD_DB;
+export const primarySqlDatabase = () => "aggregator_indexer";
 
-// Fallback database configuration (shared credentials, two hosts)
-export const fallbackSqlHosts = () => ["91.98.180.149", "135.181.128.254"];
+// Fallback database configuration
+export const fallbackSqlHost = () => "135.181.128.254";
 export const fallbackSqlPort = () => 16201;
 export const fallbackSqlUser = () => "read_only_postgres";
-export const fallbackSqlPass = () =>
-  readSecret("pgpassword_db_fallback", "PGPASSWORD_DB_FALLBACK");
+export const fallbackSqlPass = () => process.env.PGPASSWORD_DB_FALLBACK;
 export const fallbackSqlDatabase = () => "aggregator_indexer";
 
 export const xcmAuthHeader = () =>

@@ -37,8 +37,8 @@ async function executeJob(job_name) {
 
   try {
     do {
-      // Fresh SQL client each iteration: tries orca first, then fallbacks.
-      // This ensures automatic failover if orca goes down between iterations.
+      // Fresh SQL client each iteration: tries primary first, then fallback.
+      // This ensures automatic failover between iterations.
       let sqlClient;
       try {
         sqlClient = await newSqlClientWithFallback();

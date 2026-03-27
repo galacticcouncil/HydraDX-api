@@ -19,7 +19,6 @@ services:
       - DOCKER_RUN=1
       - PORT=3000
       - REDIS_URL=redis://redis:6379
-      - PGPASSWORD_DB_ORCA=${PGPASSWORD_DB_ORCA}
       - XCM_AUTH_HEADER=${XCM_AUTH_HEADER}
     depends_on:
       redis:
@@ -51,7 +50,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - JOB_NAME=cache-coingecko-tickers-job
       - CONTINUOUS_JOB=true
-      - PGPASSWORD_DB_ORCA=${PGPASSWORD_DB_ORCA}
+      - PGPASSWORD_DB=${PGPASSWORD_DB}
       - PGPASSWORD_DB_FALLBACK=${PGPASSWORD_DB_FALLBACK}
       - XCM_AUTH_HEADER=${XCM_AUTH_HEADER}
     depends_on:

@@ -1,11 +1,11 @@
 import PG from "pg";
 import {
-  orcaSqlHost,
-  orcaSqlPort,
-  orcaSqlUser,
-  orcaSqlPass,
-  orcaSqlDatabase,
-  fallbackSqlHosts,
+  primarySqlHost,
+  primarySqlPort,
+  primarySqlUser,
+  primarySqlPass,
+  primarySqlDatabase,
+  fallbackSqlHost,
   fallbackSqlPort,
   fallbackSqlUser,
   fallbackSqlPass,
@@ -33,36 +33,33 @@ async function newPoolClient({ host, port, user, password, database }) {
   return pool;
 }
 
-export async function newOrcaSqlClient() {
-  return newPoolClient({
-    host: orcaSqlHost(),
-    port: orcaSqlPort(),
-    user: orcaSqlUser(),
-    password: orcaSqlPass(),
-    database: orcaSqlDatabase(),
-  });
-}
-
-// Tries orca first, then each fallback host in order.
+// Tries primary host first, then fallback host.
 // Returns the first pool that connects successfully (max: 1 connection).
 // Caller must call pool.end() when done.
 export async function newSqlClientWithFallback() {
   const sources = [
     {
-      name: "orca (pg.squid.subsquid.io)",
-      connect: () => newOrcaSqlClient(),
-    },
-    ...fallbackSqlHosts().map((host, i) => ({
-      name: `fallback-${i + 1} (${host})`,
+      name: `primary (${primarySqlHost()})`,
       connect: () =>
         newPoolClient({
-          host,
+          host: primarySqlHost(),
+          port: primarySqlPort(),
+          user: primarySqlUser(),
+          password: primarySqlPass(),
+          database: primarySqlDatabase(),
+        }),
+    },
+    {
+      name: `fallback (${fallbackSqlHost()})`,
+      connect: () =>
+        newPoolClient({
+          host: fallbackSqlHost(),
           port: fallbackSqlPort(),
           user: fallbackSqlUser(),
           password: fallbackSqlPass(),
           database: fallbackSqlDatabase(),
         }),
-    })),
+    },
   ];
 
   let lastError;
