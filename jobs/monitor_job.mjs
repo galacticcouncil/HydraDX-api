@@ -163,9 +163,9 @@ async function sendDiscordAlert(checkId, isUp) {
     ? "has no data"
     : "stalled (data >10 min old)";
 
-  const mentions = CHECKS[checkId].mentions;
   const impactPart = isUp ? "" : ` Impact: ${impact}.`;
-  const content = `:cd: ${status} ${link} ${verb}.${impactPart} cc ${mentions}`;
+  const mentionPart = isUp ? "" : ` cc ${CHECKS[checkId].mentions}`;
+  const content = `:cd: ${status} ${link} ${verb}.${impactPart}${mentionPart}`;
 
   try {
     const res = await fetch(webhookUrl, {
