@@ -100,7 +100,8 @@ WITH token_metadata (id, symbol, decimals) AS (
     (38,      'ENA',       18),
     (40,      'jitoSOL',    9),
     (41,      'CFG',       18),
-    (42,      'EURC',       6)
+    (42,      'EURC',       6),
+    (1044,    'EURC',       6)
 ),
 relevant_blocks AS (
     SELECT id
