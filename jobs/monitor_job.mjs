@@ -27,12 +27,14 @@ const CHECKS = {
     label: "Kril Indexer",
     url: "https://adapters.kril.hydration.cloud/dexscreener/latest-block",
     impact: "DexScreener",
+    minFailures: 2, // a single probe over two proxy hops blips occasionally
     mentions: "<@690220205762543643>",
   },
   orca_indexer: {
     label: "Orca Indexer",
     url: "https://orca-main-aggr-indx.indexer.hydration.cloud/graphql",
     impact: "DefiLlama",
+    minFailures: 2, // a single probe over two proxy hops blips occasionally
     mentions: "<@690220205762543643>",
   },
 };
