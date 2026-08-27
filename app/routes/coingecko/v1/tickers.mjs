@@ -34,10 +34,14 @@ export default async (fastify, opts) => {
     handler: async (request, reply) => {
       const cacheSetting = CACHE_SETTINGS["coingeckoV1Tickers"];
 
-      // warmed by cache_coingecko_tickers_job
+      // warmed by cache_coingecko_tickers_job. an empty array is never a valid
+      // answer, and the stalled indexer left one behind under this key.
       const cachedResult = await fastify.redis.get(cacheSetting.key);
       if (cachedResult) {
-        return reply.send(JSON.parse(cachedResult));
+        const parsed = JSON.parse(cachedResult);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return reply.send(parsed);
+        }
       }
 
       // cache cold or expired: fetch inline rather than answer 503
