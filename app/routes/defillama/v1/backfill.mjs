@@ -110,14 +110,20 @@ export default async (fastify, opts) => {
 
         let volumeUsd = 0;
         let dailyFees = 0;
+        const fees = { xyk: 0, stableswap: 0, omnipool: 0 };
         for (let i = 0; i < days; i++) {
           const day = dayKey(new Date(startDateObj.getTime() + i * DAY_MS));
           const totals = await volumeForDay(fastify.redis, day);
           volumeUsd += totals.volume_usd;
           dailyFees += totals.dailyFees;
+          if (totals.fees) {
+            fees.xyk += totals.fees.xyk;
+            fees.stableswap += totals.fees.stableswap;
+            fees.omnipool += totals.fees.omnipool;
+          }
         }
 
-        return reply.send([{ volume_usd: volumeUsd, dailyFees }]);
+        return reply.send([{ volume_usd: volumeUsd, dailyFees, fees }]);
       } catch (error) {
         if (error.noDataDay) {
           fastify.log.warn(
