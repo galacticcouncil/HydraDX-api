@@ -1,3 +1,4 @@
+import { CACHE_SETTINGS } from "../variables.mjs";
 import {
   fetchSwapEvents,
   firstBlockAtOrAfter,
@@ -48,4 +49,32 @@ export async function volumeForRange(redisClient, start, end) {
     fills: fills.length,
     head: range.head,
   };
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// computes the rolling 24h figure and writes both cache slots. shared by the
+// route and the warm job so a cold sweep is never paid on a request path.
+// returns null when the archive has no blocks for the window — never a zero.
+export async function refreshVolume24h(redisClient) {
+  const cacheSetting = CACHE_SETTINGS["defillamaV1Volume"];
+  const result = await volumeForRange(
+    redisClient,
+    new Date(Date.now() - DAY_MS),
+    null
+  );
+  if (!result) return null;
+
+  const response = [{ volume_usd: result.volumeUsd }];
+  const json = JSON.stringify(response);
+
+  await redisClient.set(cacheSetting.key, json);
+  await redisClient.expire(cacheSetting.key, cacheSetting.expire_after);
+  await redisClient.set(cacheSetting.last_good_key, json);
+  await redisClient.expire(
+    cacheSetting.last_good_key,
+    cacheSetting.last_good_expire_after
+  );
+
+  return response;
 }

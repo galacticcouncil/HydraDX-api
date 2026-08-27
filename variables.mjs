@@ -67,6 +67,7 @@ export const discordWebhookUrl = () =>
 
 export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
+  cacheDefillamaVolumeJob: "cache-defillama-volume-job",
 };
 
 export const CACHE_SETTINGS = {
@@ -89,6 +90,9 @@ export const CACHE_SETTINGS = {
   defillamaV1Volume: {
     key: "defillama_v1_volume",
     expire_after: 10 * 60,
+    // survives an archive outage: a stale figure beats a made-up zero
+    last_good_key: "defillama_v1_volume_last_good",
+    last_good_expire_after: 24 * 60 * 60,
   },
   // per-day results keyed by date. past days never change, so they are kept
   // long enough that a backfill sweep only pays for each day once.

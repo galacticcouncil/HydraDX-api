@@ -1,7 +1,5 @@
 import { CACHE_SETTINGS } from "../../../../variables.mjs";
-import { volumeForRange } from "../../../../helpers/defillama_source.mjs";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { refreshVolume24h } from "../../../../helpers/defillama_source.mjs";
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -29,30 +27,26 @@ export default async (fastify, opts) => {
         return reply.send(JSON.parse(cachedResult));
       }
 
+      // cold sweep on a request path is slow, so the warm job normally gets
+      // here first; this is the fallback when the cache has lapsed.
       try {
-        const now = new Date();
-        const result = await volumeForRange(
-          fastify.redis,
-          new Date(now.getTime() - DAY_MS),
-          null
-        );
-
-        if (!result) {
-          return reply.code(503).send({
-            error: "Volume unavailable",
-            message: "Archive returned no blocks for the last 24h",
-          });
-        }
-
-        const response = [{ volume_usd: result.volumeUsd }];
-        await fastify.redis.set(cacheSetting.key, JSON.stringify(response));
-        await fastify.redis.expire(cacheSetting.key, cacheSetting.expire_after);
-
-        return reply.send(response);
+        const response = await refreshVolume24h(fastify.redis);
+        if (response) return reply.send(response);
+        fastify.log.warn("[defillama] archive returned no blocks for 24h");
       } catch (error) {
         fastify.log.error(error);
-        return reply.code(500).send({ error: "Failed to fetch volume data" });
       }
+
+      const lastGood = await fastify.redis.get(cacheSetting.last_good_key);
+      if (lastGood) {
+        return reply.send(JSON.parse(lastGood));
+      }
+
+      return reply.code(503).send({
+        error: "Volume unavailable",
+        message:
+          "The archive returned no data and no cached result is available",
+      });
     },
   });
 };

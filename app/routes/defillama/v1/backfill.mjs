@@ -21,10 +21,18 @@ async function volumeForDay(redisClient, day) {
   const start = new Date(`${day}T00:00:00.000Z`);
   const end = new Date(start.getTime() + DAY_MS);
   const result = await volumeForRange(redisClient, start, end);
-  const totals = {
-    volume_usd: result?.volumeUsd ?? 0,
-    dailyFees: result?.feesUsd ?? 0,
-  };
+
+  // an archive with no blocks for this day is not the same statement as
+  // "nothing traded". publishing 0 is what wrote phantom zeros into DefiLlama's
+  // series while the old indexer was stalled — and caching it below would have
+  // made that stick for 30 days.
+  if (!result) {
+    const error = new Error(`archive has no blocks for ${day}`);
+    error.noDataDay = day;
+    throw error;
+  }
+
+  const totals = { volume_usd: result.volumeUsd, dailyFees: result.feesUsd };
 
   // only past days are settled; today's number still moves
   if (end.getTime() <= Date.now()) {
@@ -101,6 +109,15 @@ export default async (fastify, opts) => {
 
         return reply.send([{ volume_usd: volumeUsd, dailyFees }]);
       } catch (error) {
+        if (error.noDataDay) {
+          fastify.log.warn(
+            `[defillama] archive has no data for ${error.noDataDay}`
+          );
+          return reply.code(503).send({
+            error: "Range not indexed",
+            message: `The archive has no data for ${error.noDataDay}; refusing to report zero volume`,
+          });
+        }
         fastify.log.error(error);
         return reply
           .code(500)

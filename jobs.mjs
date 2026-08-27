@@ -1,5 +1,6 @@
 import { JOBS } from "./variables.mjs";
 import { cacheCoingeckoTickersJob } from "./jobs/cache_coingecko_tickers_job.mjs";
+import { cacheDefillamaVolumeJob } from "./jobs/cache_defillama_volume_job.mjs";
 import { newRedisClient } from "./clients/redis.mjs";
 
 const { JOB_NAME, CONTINUOUS_JOB, JOB_INTERVAL_MS } = process.env;
@@ -48,6 +49,11 @@ async function executeJob(job_name) {
           case JOBS["cacheCoingeckoTickersJob"]: {
             const count = await cacheCoingeckoTickersJob(redisClient);
             console.log(`Executed ${job_name} (${count} tickers)`);
+            break;
+          }
+          case JOBS["cacheDefillamaVolumeJob"]: {
+            const volume = await cacheDefillamaVolumeJob(redisClient);
+            console.log(`Executed ${job_name} (volume_usd ${volume})`);
             break;
           }
         }
