@@ -1,9 +1,14 @@
 import { JOBS } from "./variables.mjs";
 import { cacheCoingeckoTickersJob } from "./jobs/cache_coingecko_tickers_job.mjs";
-import { newSqlClientWithFallback } from "./clients/sql.mjs";
 import { newRedisClient } from "./clients/redis.mjs";
 
-const { JOB_NAME, CONTINUOUS_JOB } = process.env;
+const { JOB_NAME, CONTINUOUS_JOB, JOB_INTERVAL_MS } = process.env;
+
+// the loop used to spin with no delay, which was survivable while every
+// iteration was a slow aggregate query. it is an http fetch now.
+const intervalMs = Number(JOB_INTERVAL_MS ?? 60_000);
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const main = async () => {
   if (!JOB_NAME) {
@@ -37,22 +42,23 @@ async function executeJob(job_name) {
 
   try {
     do {
-      // Fresh SQL client each iteration: tries primary first, then fallback.
-      // This ensures automatic failover between iterations.
-      let sqlClient;
       try {
-        sqlClient = await newSqlClientWithFallback();
         console.log(`Executing ${job_name}..`);
         switch (job_name) {
           case JOBS["cacheCoingeckoTickersJob"]: {
-            await cacheCoingeckoTickersJob(sqlClient, redisClient);
+            const count = await cacheCoingeckoTickersJob(redisClient);
+            console.log(`Executed ${job_name} (${count} tickers)`);
             break;
           }
         }
-        console.log(`Executed ${job_name}`);
-      } finally {
-        if (sqlClient) await sqlClient.end();
+      } catch (err) {
+        // a continuous job must outlive a transient upstream failure; the
+        // cached answer keeps serving until the next iteration succeeds.
+        if (!isContinuousJob()) throw err;
+        console.error(`[jobs] ${job_name} iteration failed: ${err.message}`);
       }
+
+      if (isContinuousJob()) await sleep(intervalMs);
     } while (isContinuousJob());
   } finally {
     await redisClient.disconnect();
