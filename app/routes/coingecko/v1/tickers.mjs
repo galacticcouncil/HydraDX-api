@@ -1,4 +1,5 @@
 import { CACHE_SETTINGS } from "../../../../variables.mjs";
+import { fetchIncumbentTickers } from "../../../../helpers/coingecko_shape.mjs";
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -31,19 +32,45 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      let cacheSetting = CACHE_SETTINGS["coingeckoV1Tickers"];
+      const cacheSetting = CACHE_SETTINGS["coingeckoV1Tickers"];
 
-      // Read from cache (populated by cache_coingecko_tickers_job)
+      // warmed by cache_coingecko_tickers_job
       const cachedResult = await fastify.redis.get(cacheSetting.key);
-
       if (cachedResult) {
-        reply.send(JSON.parse(cachedResult));
-      } else {
-        reply.code(503).send({
-          error: "Cache not populated",
-          message: "Please wait for the cache job to populate data",
-        });
+        return reply.send(JSON.parse(cachedResult));
       }
+
+      // cache cold or expired: fetch inline rather than answer 503
+      try {
+        const tickers = await fetchIncumbentTickers();
+        if (tickers.length > 0) {
+          const json = JSON.stringify(tickers);
+          await fastify.redis.set(cacheSetting.key, json);
+          await fastify.redis.expire(
+            cacheSetting.key,
+            cacheSetting.expire_after
+          );
+          await fastify.redis.set(cacheSetting.last_good_key, json);
+          await fastify.redis.expire(
+            cacheSetting.last_good_key,
+            cacheSetting.last_good_expire_after
+          );
+          return reply.send(tickers);
+        }
+        fastify.log.warn("[coingecko] upstream returned 0 tickers");
+      } catch (error) {
+        fastify.log.error(error);
+      }
+
+      const lastGood = await fastify.redis.get(cacheSetting.last_good_key);
+      if (lastGood) {
+        return reply.send(JSON.parse(lastGood));
+      }
+
+      return reply.code(503).send({
+        error: "Tickers unavailable",
+        message: "Upstream returned no data and no cached result is available",
+      });
     },
   });
 };

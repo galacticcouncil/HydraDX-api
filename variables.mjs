@@ -19,6 +19,14 @@ export const redisUri = () => process.env.REDIS_URL ?? "redis://127.0.0.1:6379";
 
 export const rpcUri = () => "wss://rpc.hydradx.cloud";
 
+export const neckworkBaseUrl = () =>
+  process.env.NECKWORK_API_URL ?? "https://hydration-api.neckwork.net";
+
+// the incumbent tickers query hardcoded liquidity_in_usd to 0. neckwork
+// publishes real depth; "real" passes it through, anything else keeps parity.
+export const coingeckoLiquiditySource = () =>
+  process.env.COINGECKO_LIQUIDITY === "real" ? "real" : "incumbent";
+
 // Primary database configuration
 export const primarySqlHost = () => "91.98.180.149";
 export const primarySqlPort = () => 16201;
@@ -49,6 +57,10 @@ export const CACHE_SETTINGS = {
   coingeckoV1Tickers: {
     key: "coingecko_v1_tickers",
     expire_after: 10 * 60,
+    // survives an upstream outage: a stale ticker set beats an empty one,
+    // which is exactly how the 2026-08-25 outage served [] for ~42h.
+    last_good_key: "coingecko_v1_tickers_last_good",
+    last_good_expire_after: 24 * 60 * 60,
   },
   hydrationWebV1Stats: {
     key: "hydration-web_v1_stats",

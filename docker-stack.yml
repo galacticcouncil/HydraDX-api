@@ -33,6 +33,7 @@ services:
       - DOCKER_RUN=1
       - PORT=3000
       - REDIS_URL=redis://redis:6379
+      - NECKWORK_API_URL=${NECKWORK_API_URL:-https://hydration-api.neckwork.net}
     networks:
       - hydration-net
       - gateway
@@ -86,6 +87,8 @@ services:
       - REDIS_URL=redis://redis:6379
       - JOB_NAME=cache-coingecko-tickers-job
       - CONTINUOUS_JOB=true
+      - JOB_INTERVAL_MS=60000
+      - NECKWORK_API_URL=${NECKWORK_API_URL:-https://hydration-api.neckwork.net}
     secrets:
       - xcm_auth_header
       - pgpassword_db
