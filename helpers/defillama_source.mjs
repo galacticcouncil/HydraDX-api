@@ -65,7 +65,17 @@ export async function refreshVolume24h(redisClient) {
   );
   if (!result) return null;
 
-  const response = [{ volume_usd: result.volumeUsd }];
+  const response = [
+    {
+      volume_usd: result.volumeUsd,
+      dailyFees: result.feesUsd,
+      fees: {
+        xyk: result.feesUsdByPool.XYK,
+        stableswap: result.feesUsdByPool.Stableswap,
+        omnipool: result.feesUsdByPool.Omnipool,
+      },
+    },
+  ];
   const json = JSON.stringify(response);
 
   await redisClient.set(cacheSetting.key, json);
