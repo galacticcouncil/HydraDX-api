@@ -35,6 +35,17 @@ export const fallbackSqlPass = () =>
   readSecret("pgpassword_db_fallback", "PGPASSWORD_DB_FALLBACK");
 export const fallbackSqlDatabase = () => "aggregator_indexer";
 
+// firesquid archives: raw block/event mirrors of the chain, fed straight off an
+// rpc. independent hosts, tried in order.
+export const firesquidEndpoints = () => [
+  "https://hydradx-explorer.play.hydration.cloud/graphql",
+  "https://hydradx-explorer.shellfish.hydration.cloud/graphql",
+];
+
+// blocks per archive query. keeps each one well inside the archive's statement
+// timeout, since `event.name` is unindexed there.
+export const firesquidChunkBlocks = () => 1000;
+
 export const xcmAuthHeader = () =>
   readSecret("xcm_auth_header", "XCM_AUTH_HEADER");
 
@@ -61,5 +72,15 @@ export const CACHE_SETTINGS = {
   defillamaV1Volume: {
     key: "defillama_v1_volume",
     expire_after: 10 * 60,
+  },
+  // per-day results keyed by date. past days never change, so they are kept
+  // long enough that a backfill sweep only pays for each day once.
+  defillamaV1Backfill: {
+    key: "defillama_v1_backfill_day",
+    expire_after: 30 * 24 * 60 * 60,
+  },
+  assetRegistry: {
+    key: "asset_registry",
+    expire_after: 6 * 60 * 60,
   },
 };
