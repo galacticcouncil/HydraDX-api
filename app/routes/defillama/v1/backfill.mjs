@@ -114,13 +114,24 @@ export default async (fastify, opts) => {
           endIsoString
         );
 
-        if (!volumeData) {
-          return reply.send([
-            {
-              volume_usd: 0,
-              dailyFees: 0,
-            },
-          ]);
+        // an empty result means the indexer never reached this range, not that
+        // nothing traded. reporting 0 here wrote phantom zeros into DefiLlama's
+        // series for 2026-08-25 onward while the processor was stalled.
+        const rawVolume = volumeData?.totalVolNorm;
+        const hasVolume =
+          rawVolume !== null &&
+          rawVolume !== undefined &&
+          rawVolume !== "" &&
+          Number.isFinite(Number(rawVolume));
+
+        if (!hasVolume) {
+          fastify.log.warn(
+            `[defillama] indexer has no data for ${startDate}..${endDate}`
+          );
+          return reply.code(503).send({
+            error: "Range not indexed",
+            message: `The indexer has no data for ${startDate}..${endDate}; refusing to report zero volume`,
+          });
         }
 
         // Calculate total fees (sum of all fee volumes)
