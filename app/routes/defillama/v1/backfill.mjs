@@ -32,7 +32,17 @@ async function volumeForDay(redisClient, day) {
     throw error;
   }
 
-  const totals = { volume_usd: result.volumeUsd, dailyFees: result.feesUsd };
+  const totals = {
+    volume_usd: result.volumeUsd,
+    dailyFees: result.feesUsd,
+    // per-pool-type fee split so consumers (DefiLlama) can reproduce the
+    // incumbent's fee/revenue breakdown; omnipool excludes LRNA-charged fees.
+    fees: {
+      xyk: result.feesUsdByPool.XYK,
+      stableswap: result.feesUsdByPool.Stableswap,
+      omnipool: result.feesUsdByPool.Omnipool,
+    },
+  };
 
   // only past days are settled; today's number still moves
   if (end.getTime() <= Date.now()) {

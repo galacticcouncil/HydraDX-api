@@ -197,7 +197,7 @@ function legValues(fill, lookup) {
   return { inValue, outValue };
 }
 
-// returns { "YYYY-MM-DD": { volumeUsd, feesUsd } }
+// returns { "YYYY-MM-DD": { volumeUsd, feesUsd, feesUsdByPool: { Omnipool, Stableswap, XYK } } }
 export function aggregateByDay(fills) {
   const lookup = buildPriceLookup(fills);
   const byDay = {};
@@ -208,7 +208,11 @@ export function aggregateByDay(fills) {
     if (!values) continue;
     const { inValue, outValue } = values;
 
-    const bucket = (byDay[fill.day] ??= { volumeUsd: 0, feesUsd: 0 });
+    const bucket = (byDay[fill.day] ??= {
+      volumeUsd: 0,
+      feesUsd: 0,
+      feesUsdByPool: { Omnipool: 0, Stableswap: 0, XYK: 0 },
+    });
     const priceOf = (asset) => lookup(fill, asset)?.price ?? null;
 
     if (fill.filler === "Omnipool") {
@@ -216,7 +220,11 @@ export function aggregateByDay(fills) {
       for (const fee of fill.fees) {
         if (fee.asset === LRNA_ASSET_ID) continue;
         const price = priceOf(fee.asset);
-        if (price != null) bucket.feesUsd += fee.amount * price;
+        if (price != null) {
+          const value = fee.amount * price;
+          bucket.feesUsd += value;
+          bucket.feesUsdByPool.Omnipool += value;
+        }
       }
       continue;
     }
@@ -231,7 +239,12 @@ export function aggregateByDay(fills) {
 
     for (const fee of fill.fees) {
       const price = priceOf(fee.asset);
-      if (price != null) bucket.feesUsd += fee.amount * price;
+      if (price != null) {
+        const value = fee.amount * price;
+        bucket.feesUsd += value;
+        // fill.filler is "Stableswap" or "XYK" here (Omnipool returns above)
+        bucket.feesUsdByPool[fill.filler] += value;
+      }
     }
   }
 
@@ -241,9 +254,15 @@ export function aggregateByDay(fills) {
 export function totalsOf(byDay) {
   let volumeUsd = 0;
   let feesUsd = 0;
+  const feesUsdByPool = { Omnipool: 0, Stableswap: 0, XYK: 0 };
   for (const day of Object.values(byDay)) {
     volumeUsd += day.volumeUsd;
     feesUsd += day.feesUsd;
+    if (day.feesUsdByPool) {
+      feesUsdByPool.Omnipool += day.feesUsdByPool.Omnipool;
+      feesUsdByPool.Stableswap += day.feesUsdByPool.Stableswap;
+      feesUsdByPool.XYK += day.feesUsdByPool.XYK;
+    }
   }
-  return { volumeUsd, feesUsd };
+  return { volumeUsd, feesUsd, feesUsdByPool };
 }

@@ -119,6 +119,26 @@ test("stableswap and xyk fees count whatever they are charged in", async (t) => 
   );
 });
 
+test("fees are split per pool type, summing to the total", async (t) => {
+  const byPool = (fills) => totalsOf(aggregateByDay(fills)).feesUsdByPool;
+  const split = byPool([
+    fill({ filler: "XYK", fees: [{ asset: USDT, amount: 3 }] }),
+    fill({ filler: "Stableswap", fees: [{ asset: DAI, amount: 2 }] }),
+    fill({
+      filler: "Omnipool",
+      inAsset: LRNA,
+      inAmount: 50,
+      fees: [
+        { asset: USDT, amount: 5 },
+        { asset: LRNA, amount: 99 }, // hub fee — excluded everywhere
+      ],
+    }),
+  ]);
+  t.equal(split.XYK, 3, "xyk fees bucketed to xyk");
+  t.equal(split.Stableswap, 2, "stableswap fees bucketed to stableswap");
+  t.equal(split.Omnipool, 5, "omnipool fees exclude the LRNA-charged leg");
+});
+
 test("volume is bucketed per UTC day", async (t) => {
   const byDay = aggregateByDay([
     fill({ day: "2026-08-20", hour: "2026-08-20T23" }),
