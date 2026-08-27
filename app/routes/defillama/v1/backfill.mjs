@@ -1,51 +1,45 @@
-import { gql, request as gqlRequest } from "graphql-request";
+import { CACHE_SETTINGS } from "../../../../variables.mjs";
+import { volumeForRange } from "../../../../helpers/defillama_source.mjs";
 
-const GRAPHQL_ENDPOINT =
-  "https://orca-sh-prod-pool-02.orca.hydration.cloud/graphql";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-async function fetchVolumeForPeriod(startIsoString, endIsoString) {
-  const timeout = (ms) =>
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Request timeout")), ms)
-    );
+// each uncached day costs a full sweep of that day's swap events, so a range has
+// to be bounded. matches the limit the reference implementation advertises.
+const MAX_DAYS = 62;
 
-  const fetchData = async () => {
-    const data = await gqlRequest(
-      GRAPHQL_ENDPOINT,
-      gql`
-        query GetVolumeForPeriod(
-          $startIsoString: String!
-          $endIsoString: String!
-        ) {
-          platformTotalVolumesByPeriod(
-            filter: {
-              startIsoString: $startIsoString
-              endIsoString: $endIsoString
-            }
-          ) {
-            nodes {
-              paraBlockHeight
-              omnipoolFeeVolNorm
-              omnipoolVolNorm
-              stableswapFeeVolNorm
-              stableswapVolNorm
-              totalVolNorm
-              xykpoolFeeVolNorm
-              xykpoolVolNorm
-            }
-          }
-        }
-      `,
-      {
-        startIsoString,
-        endIsoString,
-      }
-    );
+function dayKey(date) {
+  return date.toISOString().slice(0, 10);
+}
 
-    return data.platformTotalVolumesByPeriod.nodes[0];
-  };
+async function volumeForDay(redisClient, day) {
+  const cacheSetting = CACHE_SETTINGS["defillamaV1Backfill"];
+  const key = `${cacheSetting.key}:${day}`;
 
-  return Promise.race([fetchData(), timeout(10000)]);
+  const cached = await redisClient.get(key);
+  if (cached) return JSON.parse(cached);
+
+  const start = new Date(`${day}T00:00:00.000Z`);
+  const end = new Date(start.getTime() + DAY_MS);
+  const result = await volumeForRange(redisClient, start, end);
+
+  // an archive with no blocks for this day is not the same statement as
+  // "nothing traded". publishing 0 is what wrote phantom zeros into DefiLlama's
+  // series while the old indexer was stalled — and caching it below would have
+  // made that stick for 30 days.
+  if (!result) {
+    const error = new Error(`archive has no blocks for ${day}`);
+    error.noDataDay = day;
+    throw error;
+  }
+
+  const totals = { volume_usd: result.volumeUsd, dailyFees: result.feesUsd };
+
+  // only past days are settled; today's number still moves
+  if (end.getTime() <= Date.now()) {
+    await redisClient.set(key, JSON.stringify(totals));
+    await redisClient.expire(key, cacheSetting.expire_after);
+  }
+  return totals;
 }
 
 export default async (fastify, opts) => {
@@ -76,18 +70,13 @@ export default async (fastify, opts) => {
       try {
         const { startDate, endDate } = request.query;
 
-        // Validate dates
         if (!startDate || !endDate) {
           return reply.code(400).send({
             error: "Both startDate and endDate are required",
           });
         }
 
-        // Convert to ISO strings (assuming UTC timezone and midnight)
-        const startIsoString = `${startDate}T00:00:00.000Z`;
-
-        // Validate date format
-        const startDateObj = new Date(startIsoString);
+        const startDateObj = new Date(`${startDate}T00:00:00.000Z`);
         const endDateObj = new Date(`${endDate}T00:00:00.000Z`);
 
         if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
@@ -102,45 +91,37 @@ export default async (fastify, opts) => {
           });
         }
 
-        // Make endDate inclusive by adding 1 day to the end ISO string
-        const endDatePlusOne = new Date(
-          endDateObj.getTime() + 24 * 60 * 60 * 1000
-        );
-        const endIsoString = endDatePlusOne.toISOString();
-
-        // Fetch from GraphQL
-        const volumeData = await fetchVolumeForPeriod(
-          startIsoString,
-          endIsoString
-        );
-
-        if (!volumeData) {
-          return reply.send([
-            {
-              volume_usd: 0,
-              dailyFees: 0,
-            },
-          ]);
+        const days = Math.round((endDateObj - startDateObj) / DAY_MS) + 1; // endDate inclusive
+        if (days > MAX_DAYS) {
+          return reply.code(400).send({
+            error: `Date range too large. Maximum ${MAX_DAYS} days per request`,
+          });
         }
 
-        // Calculate total fees (sum of all fee volumes)
-        const totalFees =
-          parseFloat(volumeData.omnipoolFeeVolNorm) +
-          parseFloat(volumeData.stableswapFeeVolNorm) +
-          parseFloat(volumeData.xykpoolFeeVolNorm);
+        let volumeUsd = 0;
+        let dailyFees = 0;
+        for (let i = 0; i < days; i++) {
+          const day = dayKey(new Date(startDateObj.getTime() + i * DAY_MS));
+          const totals = await volumeForDay(fastify.redis, day);
+          volumeUsd += totals.volume_usd;
+          dailyFees += totals.dailyFees;
+        }
 
-        // Format response in defillama expected format
-        const response = [
-          {
-            volume_usd: parseFloat(volumeData.totalVolNorm),
-            dailyFees: totalFees,
-          },
-        ];
-
-        reply.send(response);
+        return reply.send([{ volume_usd: volumeUsd, dailyFees }]);
       } catch (error) {
+        if (error.noDataDay) {
+          fastify.log.warn(
+            `[defillama] archive has no data for ${error.noDataDay}`
+          );
+          return reply.code(503).send({
+            error: "Range not indexed",
+            message: `The archive has no data for ${error.noDataDay}; refusing to report zero volume`,
+          });
+        }
         fastify.log.error(error);
-        reply.code(500).send({ error: "Failed to fetch backfill volume data" });
+        return reply
+          .code(500)
+          .send({ error: "Failed to fetch backfill volume data" });
       }
     },
   });

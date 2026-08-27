@@ -1,32 +1,5 @@
-import { gql, request as gqlRequest } from "graphql-request";
 import { CACHE_SETTINGS } from "../../../../variables.mjs";
-
-const GRAPHQL_ENDPOINT =
-  "https://orca-main-aggr-indx.indexer.hydration.cloud/graphql";
-
-async function fetchVolumeFromGraphQL() {
-  const data = await gqlRequest(
-    GRAPHQL_ENDPOINT,
-    gql`
-      {
-        platformTotalVolumesByPeriod(filter: { period: _24H_ }) {
-          nodes {
-            totalVolNorm
-            omnipoolVolNorm
-            omnipoolFeeVolNorm
-            stableswapVolNorm
-            stableswapFeeVolNorm
-            xykpoolVolNorm
-            xykpoolFeeVolNorm
-            paraBlockHeight
-          }
-        }
-      }
-    `
-  );
-
-  return data.platformTotalVolumesByPeriod.nodes[0];
-}
+import { refreshVolume24h } from "../../../../helpers/defillama_source.mjs";
 
 export default async (fastify, opts) => {
   fastify.route({
@@ -46,36 +19,34 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
+      // platform-wide figure, so the asset param does not change the answer
+      const cacheSetting = CACHE_SETTINGS["defillamaV1Volume"];
+
+      const cachedResult = await fastify.redis.get(cacheSetting.key);
+      if (cachedResult) {
+        return reply.send(JSON.parse(cachedResult));
+      }
+
+      // cold sweep on a request path is slow, so the warm job normally gets
+      // here first; this is the fallback when the cache has lapsed.
       try {
-        // Use a cache key that doesn't depend on asset since we're getting platform-wide data
-        let cacheSetting = { ...CACHE_SETTINGS["defillamaV1Volume"] };
-        cacheSetting.key = "defillama_v1_volume_graphql_array_format";
-
-        // Check cache first
-        const cachedResult = await fastify.redis.get(cacheSetting.key);
-        if (cachedResult) {
-          return reply.send(JSON.parse(cachedResult));
-        }
-
-        // Fetch from GraphQL
-        const volumeData = await fetchVolumeFromGraphQL();
-
-        // Format response to maintain original format - array with single object
-        const response = [
-          {
-            volume_usd: parseFloat(volumeData.totalVolNorm),
-          },
-        ];
-
-        // Cache the result using the correct expire_after setting
-        await fastify.redis.set(cacheSetting.key, JSON.stringify(response));
-        await fastify.redis.expire(cacheSetting.key, cacheSetting.expire_after);
-
-        reply.send(response);
+        const response = await refreshVolume24h(fastify.redis);
+        if (response) return reply.send(response);
+        fastify.log.warn("[defillama] archive returned no blocks for 24h");
       } catch (error) {
         fastify.log.error(error);
-        reply.code(500).send({ error: "Failed to fetch volume data" });
       }
+
+      const lastGood = await fastify.redis.get(cacheSetting.last_good_key);
+      if (lastGood) {
+        return reply.send(JSON.parse(lastGood));
+      }
+
+      return reply.code(503).send({
+        error: "Volume unavailable",
+        message:
+          "The archive returned no data and no cached result is available",
+      });
     },
   });
 };

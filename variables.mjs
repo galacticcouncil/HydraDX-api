@@ -43,6 +43,22 @@ export const fallbackSqlPass = () =>
   readSecret("pgpassword_db_fallback", "PGPASSWORD_DB_FALLBACK");
 export const fallbackSqlDatabase = () => "aggregator_indexer";
 
+// firesquid archives: raw block/event mirrors of the chain, fed straight off an
+// rpc. independent hosts, tried in order.
+export const firesquidEndpoints = () => [
+  "https://hydradx-explorer.play.hydration.cloud/graphql",
+  "https://hydradx-explorer.shellfish.hydration.cloud/graphql",
+];
+
+// blocks per archive query. the archive is round-trip bound rather than scan
+// bound over a height range, so bigger chunks are much faster; the ceiling is
+// firesquidRowLimit, which a chunk must never reach.
+export const firesquidChunkBlocks = () => 5000;
+
+// peak observed density is ~1.4 swaps/block, so this leaves ~3x headroom over a
+// full chunk. a chunk that reaches it throws rather than silently truncating.
+export const firesquidRowLimit = () => 20000;
+
 export const xcmAuthHeader = () =>
   readSecret("xcm_auth_header", "XCM_AUTH_HEADER");
 
@@ -51,6 +67,7 @@ export const discordWebhookUrl = () =>
 
 export const JOBS = {
   cacheCoingeckoTickersJob: "cache-coingecko-tickers-job",
+  cacheDefillamaVolumeJob: "cache-defillama-volume-job",
 };
 
 export const CACHE_SETTINGS = {
@@ -73,5 +90,18 @@ export const CACHE_SETTINGS = {
   defillamaV1Volume: {
     key: "defillama_v1_volume",
     expire_after: 10 * 60,
+    // survives an archive outage: a stale figure beats a made-up zero
+    last_good_key: "defillama_v1_volume_last_good",
+    last_good_expire_after: 24 * 60 * 60,
+  },
+  // per-day results keyed by date. past days never change, so they are kept
+  // long enough that a backfill sweep only pays for each day once.
+  defillamaV1Backfill: {
+    key: "defillama_v1_backfill_day",
+    expire_after: 30 * 24 * 60 * 60,
+  },
+  assetRegistry: {
+    key: "asset_registry",
+    expire_after: 6 * 60 * 60,
   },
 };
