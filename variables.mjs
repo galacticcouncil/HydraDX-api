@@ -42,9 +42,14 @@ export const firesquidEndpoints = () => [
   "https://hydradx-explorer.shellfish.hydration.cloud/graphql",
 ];
 
-// blocks per archive query. keeps each one well inside the archive's statement
-// timeout, since `event.name` is unindexed there.
-export const firesquidChunkBlocks = () => 1000;
+// blocks per archive query. the archive is round-trip bound rather than scan
+// bound over a height range, so bigger chunks are much faster; the ceiling is
+// firesquidRowLimit, which a chunk must never reach.
+export const firesquidChunkBlocks = () => 5000;
+
+// peak observed density is ~1.4 swaps/block, so this leaves ~3x headroom over a
+// full chunk. a chunk that reaches it throws rather than silently truncating.
+export const firesquidRowLimit = () => 20000;
 
 export const xcmAuthHeader = () =>
   readSecret("xcm_auth_header", "XCM_AUTH_HEADER");

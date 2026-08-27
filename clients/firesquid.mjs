@@ -1,5 +1,9 @@
 import { gql, request as gqlRequest } from "graphql-request";
-import { firesquidEndpoints, firesquidChunkBlocks } from "../variables.mjs";
+import {
+  firesquidEndpoints,
+  firesquidChunkBlocks,
+  firesquidRowLimit,
+} from "../variables.mjs";
 
 // the firesquid archive keeps raw `block` + `event` rows for the whole chain and
 // is fed straight off an rpc, so it does not stall when the aggregation indexer
@@ -77,10 +81,11 @@ export async function firstBlockAtOrAfter(date) {
 // `event.name` is unindexed there, but the block-height predicate is not.
 export async function fetchSwapEvents(fromHeight, toHeight, onBatch) {
   const chunk = firesquidChunkBlocks();
+  const limit = firesquidRowLimit();
   for (let from = fromHeight; from < toHeight; from += chunk) {
     const to = Math.min(from + chunk, toHeight);
-    const data = await query(SWAPS_IN_RANGE, { from, to, limit: 10000 });
-    if (data.events.length >= 10000) {
+    const data = await query(SWAPS_IN_RANGE, { from, to, limit });
+    if (data.events.length >= limit) {
       throw new Error(
         `[firesquid] chunk ${from}-${to} hit the row limit; lower firesquidChunkBlocks`
       );
