@@ -1,9 +1,11 @@
 import { CACHE_SETTINGS } from "../../../../variables.mjs";
 import { neckworkGet } from "../../../../clients/neckwork.mjs";
+import { trailingVolumeUsd } from "../../../../helpers/defillama_source.mjs";
 
-// neckwork serves this shape natively off the live indexer, replacing the
-// retired orca aggregation-indexer GraphQL (+ the ocelloids XCM call, whose
-// figure neckwork now folds into xcm_vol_30d).
+// tvl / xcm_vol_30d / asset + account counts come from neckwork (live indexer),
+// replacing the retired orca aggregation-indexer GraphQL. vol_30d is sourced
+// from the defillama pipeline instead, so the homepage volume matches the
+// figure DefiLlama reports (both count every swap leg and router hop).
 export default async (fastify, opts) => {
   fastify.route({
     url: "/stats",
@@ -34,11 +36,14 @@ export default async (fastify, opts) => {
           return reply.send(JSON.parse(cachedResult));
         }
 
-        const stats = await neckworkGet("/hydration-web/v1/stats");
+        const [stats, vol30d] = await Promise.all([
+          neckworkGet("/hydration-web/v1/stats"),
+          trailingVolumeUsd(fastify.redis, 30),
+        ]);
 
         const result = {
           tvl: Number(stats.tvl) || 0,
-          vol_30d: Number(stats.vol_30d) || 0,
+          vol_30d: Number(vol30d) || 0,
           xcm_vol_30d: Number(stats.xcm_vol_30d) || 0,
           assets_count: Number(stats.assets_count) || 0,
           accounts_count: Number(stats.accounts_count) || 0,

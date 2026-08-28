@@ -53,6 +53,74 @@ export async function volumeForRange(redisClient, start, end) {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+function backfillDayKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+// per-day volume + per-pool fees, cached under the backfill key (settled days
+// only). shared by the /backfill route and the homepage vol_30d so both read
+// the same numbers from the same cache. throws { noDataDay } when the archive
+// has no blocks for the day — never a phantom zero.
+export async function volumeForDay(redisClient, day) {
+  const cacheSetting = CACHE_SETTINGS["defillamaV1Backfill"];
+  const key = `${cacheSetting.key}:${day}`;
+
+  const cached = await redisClient.get(key);
+  if (cached) return JSON.parse(cached);
+
+  const start = new Date(`${day}T00:00:00.000Z`);
+  const end = new Date(start.getTime() + DAY_MS);
+  const result = await volumeForRange(redisClient, start, end);
+
+  if (!result) {
+    const error = new Error(`archive has no blocks for ${day}`);
+    error.noDataDay = day;
+    throw error;
+  }
+
+  const totals = {
+    volume_usd: result.volumeUsd,
+    dailyFees: result.feesUsd,
+    fees: {
+      xyk: result.feesUsdByPool.XYK,
+      stableswap: result.feesUsdByPool.Stableswap,
+      omnipool: result.feesUsdByPool.Omnipool,
+    },
+  };
+
+  // only past days are settled; today's number still moves
+  if (end.getTime() <= Date.now()) {
+    await redisClient.set(key, JSON.stringify(totals));
+    await redisClient.expire(key, cacheSetting.expire_after);
+  }
+  return totals;
+}
+
+// trailing-N-day volume in USD, summed from the same per-day source /backfill
+// serves — so the homepage figure matches what DefiLlama reports. excludes
+// today (partial); a day the archive can't cover is skipped, not counted zero.
+export async function trailingVolumeUsd(redisClient, days = 30) {
+  const now = new Date();
+  const todayUtc = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  );
+
+  let total = 0;
+  for (let i = 1; i <= days; i++) {
+    const day = backfillDayKey(new Date(todayUtc - i * DAY_MS));
+    try {
+      const totals = await volumeForDay(redisClient, day);
+      total += totals.volume_usd;
+    } catch (error) {
+      if (error.noDataDay) continue;
+      throw error;
+    }
+  }
+  return total;
+}
+
 // computes the rolling 24h figure and writes both cache slots. shared by the
 // route and the warm job so a cold sweep is never paid on a request path.
 // returns null when the archive has no blocks for the window — never a zero.
