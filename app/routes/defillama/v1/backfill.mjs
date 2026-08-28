@@ -1,4 +1,7 @@
-import { CACHE_SETTINGS } from "../../../../variables.mjs";
+import {
+  CACHE_SETTINGS,
+  defillamaTrustedFrom,
+} from "../../../../variables.mjs";
 import { volumeForRange } from "../../../../helpers/defillama_source.mjs";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -98,6 +101,17 @@ export default async (fastify, opts) => {
         if (startDateObj > endDateObj) {
           return reply.code(400).send({
             error: "startDate must be before or equal to endDate",
+          });
+        }
+
+        // refusing beats answering with numbers we know are wrong: a consumer
+        // re-running a backfill over the early era would replace correct
+        // history with zeros or 40%-off figures.
+        const trustedFrom = defillamaTrustedFrom();
+        if (startDate < trustedFrom) {
+          return reply.code(400).send({
+            error: "Range predates reliable coverage",
+            message: `This endpoint only serves days from ${trustedFrom} onward; ${startDate} is earlier. Before that the archive lacks the unified swap event and the derived figures diverge from the historical series`,
           });
         }
 

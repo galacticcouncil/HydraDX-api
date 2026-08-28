@@ -55,6 +55,18 @@ export const firesquidEndpoints = () => [
 // firesquidRowLimit, which a chunk must never reach.
 export const firesquidChunkBlocks = () => 5000;
 
+// earliest day this endpoint will answer for. two hard limits sit behind it:
+// the archive carries no `Broadcast.Swapped3` before 2025-05-21 (swaps were
+// emitted under the older event shape, so a sweep finds nothing and would
+// report a real-looking 0), and through 2026-01 the derived figures disagree
+// with the incumbent series by up to 40% — the price graph is reconstructed
+// from the swaps themselves and is thin that far back. Measured 2026-08-28
+// against DefiLlama's own stored series: 2026-01-01 ratio 1.176, 2026-02-01
+// 1.002, 2026-02-15 0.997. Serving the earlier era would silently overwrite
+// a consumer's correct history with worse numbers, so refuse it instead.
+export const defillamaTrustedFrom = () =>
+  process.env.DEFILLAMA_TRUSTED_FROM ?? "2026-02-01";
+
 // peak observed density is ~1.4 swaps/block, so this leaves ~3x headroom over a
 // full chunk. a chunk that reaches it throws rather than silently truncating.
 export const firesquidRowLimit = () => 20000;
