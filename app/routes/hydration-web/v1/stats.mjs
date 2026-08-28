@@ -1,10 +1,9 @@
-import { gql, request as gqlRequest } from "graphql-request";
-import { CACHE_SETTINGS, xcmAuthHeader } from "../../../../variables.mjs";
+import { CACHE_SETTINGS } from "../../../../variables.mjs";
+import { neckworkGet } from "../../../../clients/neckwork.mjs";
 
-const ORCA_GRAPHQL_ENDPOINT =
-  "https://orca-main-aggr-indx.indexer.hydration.cloud/graphql";
-const XCM_API_ENDPOINT = "https://api.ocelloids.net/query/xcm";
-
+// neckwork serves this shape natively off the live indexer, replacing the
+// retired orca aggregation-indexer GraphQL (+ the ocelloids XCM call, whose
+// figure neckwork now folds into xcm_vol_30d).
 export default async (fastify, opts) => {
   fastify.route({
     url: "/stats",
@@ -27,170 +26,30 @@ export default async (fastify, opts) => {
       },
     },
     handler: async (request, reply) => {
-      request.log.info("Starting stats handler");
+      const cacheSetting = CACHE_SETTINGS["hydrationWebV1Stats"];
 
       try {
-        const cacheSetting = CACHE_SETTINGS["hydrationWebV1Stats"];
         const cachedResult = await fastify.redis.get(cacheSetting.key);
         if (cachedResult) {
-          request.log.info("Returning cached stats");
           return reply.send(JSON.parse(cachedResult));
         }
 
-        const [
-          omnipoolAssetsData,
-          xykPoolsData,
-          stableAssetsData,
-          accountsData,
-          tvlData,
-          volumeData,
-        ] = await Promise.all([
-          gqlRequest(
-            ORCA_GRAPHQL_ENDPOINT,
-            gql`
-              {
-                omnipoolAssets {
-                  nodes {
-                    assetId
-                  }
-                  totalCount
-                }
-              }
-            `
-          ),
-          gqlRequest(
-            ORCA_GRAPHQL_ENDPOINT,
-            gql`
-              {
-                xykpools {
-                  nodes {
-                    assetAId
-                    assetBId
-                  }
-                }
-              }
-            `
-          ),
-          gqlRequest(
-            ORCA_GRAPHQL_ENDPOINT,
-            gql`
-              {
-                stableswapAssets {
-                  nodes {
-                    assetId
-                  }
-                }
-              }
-            `
-          ),
-          gqlRequest(
-            ORCA_GRAPHQL_ENDPOINT,
-            gql`
-              {
-                accounts {
-                  totalCount
-                }
-              }
-            `
-          ),
-          gqlRequest(
-            ORCA_GRAPHQL_ENDPOINT,
-            gql`
-              {
-                platformTotalTvl {
-                  nodes {
-                    totalTvlDecoratedNorm
-                  }
-                }
-              }
-            `
-          ),
-          gqlRequest(
-            ORCA_GRAPHQL_ENDPOINT,
-            gql`
-              {
-                platformTotalVolumesByPeriod(filter: { period: _30D_ }) {
-                  nodes {
-                    totalVolNorm
-                  }
-                }
-              }
-            `
-          ),
-        ]);
-
-        const omnipoolIds = new Set(
-          omnipoolAssetsData.omnipoolAssets.nodes.map((n) => n.assetId)
-        );
-        const xykAssetIds = new Set();
-        xykPoolsData.xykpools.nodes.forEach(({ assetAId, assetBId }) => {
-          xykAssetIds.add(assetAId);
-          xykAssetIds.add(assetBId);
-        });
-        const stableAssetIds = new Set(
-          stableAssetsData.stableswapAssets.nodes.map((n) => n.assetId)
-        );
-
-        const allTradableAssets = new Set([
-          ...omnipoolIds,
-          ...xykAssetIds,
-          ...stableAssetIds,
-        ]);
-        const assetsCount = allTradableAssets.size;
-        const accountsCount = accountsData.accounts.totalCount;
-
-        const vol30d = Number(
-          volumeData.platformTotalVolumesByPeriod.nodes[0]?.totalVolNorm || 0
-        );
-
-        let xcmVol30d = 0;
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-          const xcmRes = await fetch(XCM_API_ENDPOINT, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${xcmAuthHeader()}`,
-            },
-            body: JSON.stringify({
-              args: {
-                op: "transfers_by_network",
-                criteria: { timeframe: "1 months" },
-              },
-            }),
-            signal: controller.signal,
-          });
-
-          clearTimeout(timeoutId);
-          const json = await xcmRes.json();
-          const hydration = json.items?.find(
-            (x) => x.network === "urn:ocn:polkadot:2034"
-          );
-          if (hydration) xcmVol30d = hydration.volumeUsd;
-        } catch (e) {
-          request.log.warn("Failed to fetch xcm volume", e);
-        }
-
-        const tvl =
-          tvlData.platformTotalTvl.nodes[0]?.totalTvlDecoratedNorm || 0;
+        const stats = await neckworkGet("/hydration-web/v1/stats");
 
         const result = {
-          tvl: Number(tvl),
-          vol_30d: vol30d,
-          xcm_vol_30d: Number(xcmVol30d.toFixed(12)),
-          assets_count: assetsCount,
-          accounts_count: accountsCount,
+          tvl: Number(stats.tvl) || 0,
+          vol_30d: Number(stats.vol_30d) || 0,
+          xcm_vol_30d: Number(stats.xcm_vol_30d) || 0,
+          assets_count: Number(stats.assets_count) || 0,
+          accounts_count: Number(stats.accounts_count) || 0,
         };
 
         await fastify.redis.set(cacheSetting.key, JSON.stringify(result));
         await fastify.redis.expire(cacheSetting.key, cacheSetting.expire_after);
 
-        request.log.info("Final stats response: " + JSON.stringify(result));
-        reply.send(result);
+        return reply.send(result);
       } catch (err) {
-        request.log.error("Failed to compute stats", err);
+        request.log.error(err, "Failed to compute stats");
         return reply.status(500).send({ error: "Stats computation failed" });
       }
     },
